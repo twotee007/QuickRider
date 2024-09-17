@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "989481455445",
+    "project_id": "quickriderth",
+    "storage_bucket": "quickriderth.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:989481455445:android:496581489226a84195a9dc",
+        "android_client_info": {
+          "package_name": "com.example.quickrider"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC4AzYiaUjFdmEaf2BYVyXsneKKgwP31iU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
