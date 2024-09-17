@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:quickrider/firebase_options.dart';
 import 'package:quickrider/page/screenpage.dart';
+import 'package:quickrider/page/signup.dart';
 
 void main() async {
   // Connect firebase
@@ -22,7 +23,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return const MaterialApp(
       title: 'Flutter Demo',
-      home: ScreenPage(),
+      home: Signup(),
     );
   }
 }
