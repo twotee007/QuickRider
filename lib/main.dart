@@ -2,8 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:quickrider/firebase_options.dart';
-import 'package:quickrider/page/screenpage.dart';
-import 'package:quickrider/page/signup.dart';
+import 'package:quickrider/page/login.dart';
 
 void main() async {
   // Connect firebase
@@ -21,9 +20,10 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       title: 'Flutter Demo',
-      home: Signup(),
+      home: Login(),
+      // debugShowCheckedModeBanner: false, // ถ้าคุณเปิดใช้งานบรรทัดนี้ ตัวแถบจะถูกซ่อน
     );
   }
 }

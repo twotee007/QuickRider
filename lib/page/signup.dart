@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:quickrider/page/DriverSignUp.dart';
+import 'package:quickrider/page/UserSignUp.dart';
 
 class Signup extends StatefulWidget {
   const Signup({super.key});
@@ -35,7 +37,11 @@ class _SignupState extends State<Signup> {
             SizedBox(height: 60),
             ElevatedButton(
               onPressed: () {
-                // กดปุ่มนี้เพื่อไปหน้า SignUp สำหรับคนขับ
+                // เมื่อกดปุ่มนี้จะไปยังหน้า DriverSignup
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => DriverSignup()),
+                );
               },
               style: ElevatedButton.styleFrom(
                 foregroundColor: Colors.black,
@@ -52,7 +58,11 @@ class _SignupState extends State<Signup> {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                // กดปุ่มนี้เพื่อไปหน้า SignUp สำหรับผู้ใช้
+                // เมื่อกดปุ่มนี้จะไปยังหน้า DriverSignup
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => UserSignup()),
+                );
               },
               style: ElevatedButton.styleFrom(
                 foregroundColor: Colors.black,
