@@ -2,11 +2,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
+import 'package:get_storage/get_storage.dart';
 // import 'package:get_storage/get_storage.dart';
 import 'package:provider/provider.dart';
 import 'package:quickrider/config/shared/appData.dart';
 import 'package:quickrider/firebase_options.dart';
 import 'package:quickrider/page/Login.dart';
+import 'package:quickrider/page/PageRider/HomeRider.dart';
+import 'package:quickrider/page/PageUser/HomeUser.dart';
 
 void main() async {
   // Connect firebase
@@ -16,7 +19,7 @@ void main() async {
   FirebaseFirestore.instance.settings = const Settings(
     persistenceEnabled: true,
   );
-  // await GetStorage.init();
+  await GetStorage.init();
   runApp(
     MultiProvider(
       providers: [
@@ -32,9 +35,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const GetMaterialApp(
+    return GetMaterialApp(
       title: 'Flutter Demo',
-      home: Login(),
+      home: HomeUserpage(),
     );
   }
 }
