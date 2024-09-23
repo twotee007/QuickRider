@@ -1,7 +1,14 @@
+import 'dart:developer';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:quickrider/page/PageRider/HomeRider.dart';
+import 'package:quickrider/page/PageUser/HomeUser.dart';
 import 'package:quickrider/page/signup.dart';
 
 class Login extends StatefulWidget {
+  const Login({super.key});
   @override
   _LoginState createState() => _LoginState();
 }
@@ -9,12 +16,13 @@ class Login extends StatefulWidget {
 class _LoginState extends State<Login> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  String text = '';
   bool _isPasswordVisible = false; // To track password visibility
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF412160), // สีพื้นหลังม่วง
+      backgroundColor: const Color(0xFF412160), // สีพื้นหลังม่วง
       body: Center(
         child: SingleChildScrollView(
           child: Padding(
@@ -23,7 +31,7 @@ class _LoginState extends State<Login> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start, // จัดตำแหน่งซ้าย
               children: <Widget>[
-                Row(
+                const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Spacer(flex: 2), // ดัน Quick Ride ให้อยู่ตรงกลาง
@@ -38,9 +46,9 @@ class _LoginState extends State<Login> {
                     Spacer(flex: 2), // ดันไอคอนกับข้อความให้อยู่แนวเดียวกัน
                   ],
                 ),
-                SizedBox(height: 20), // เพิ่มระยะห่างด้านล่าง
+                const SizedBox(height: 20), // เพิ่มระยะห่างด้านล่าง
                 Container(
-                  padding: EdgeInsets.symmetric(
+                  padding: const EdgeInsets.symmetric(
                       horizontal: 20, vertical: 30), // ขยายด้านบนของกรอบสีขาว
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -49,7 +57,7 @@ class _LoginState extends State<Login> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start, // จัดชิดซ้าย
                     children: [
-                      Center(
+                      const Center(
                         child: Text(
                           'LOGIN',
                           style: TextStyle(
@@ -59,23 +67,25 @@ class _LoginState extends State<Login> {
                           ),
                         ),
                       ),
-                      SizedBox(height: 20), // ขยับลงให้ฟิลด์ห่างจากหัวข้อ
+                      const SizedBox(height: 20), // ขยับลงให้ฟิลด์ห่างจากหัวข้อ
                       _buildTextField(
                           Icons.person, 'Email or Number', _emailController),
                       _buildPasswordField(Icons.lock, 'Password'),
-                      SizedBox(height: 50), // เพิ่มระยะห่างระหว่างฟิลด์และปุ่ม
+                      Center(child: Text(text)),
+                      const SizedBox(
+                          height: 20), // เพิ่มระยะห่างระหว่างฟิลด์และปุ่ม
                       ElevatedButton(
                         onPressed: () {
-                          // Handle login action here
+                          cheacklogin();
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFF412160), // สีม่วง
-                          padding: EdgeInsets.symmetric(vertical: 15),
+                          backgroundColor: const Color(0xFF412160), // สีม่วง
+                          padding: const EdgeInsets.symmetric(vertical: 15),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30),
                           ),
                         ),
-                        child: Center(
+                        child: const Center(
                           child: Text(
                             'Login',
                             style: TextStyle(
@@ -85,21 +95,17 @@ class _LoginState extends State<Login> {
                           ),
                         ),
                       ),
-                      SizedBox(height: 30), // เพิ่มระยะห่างจากปุ่ม "Login"
+                      const SizedBox(
+                          height: 30), // เพิ่มระยะห่างจากปุ่ม "Login"
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text("Don't have an account? "),
+                          const Text("Don't have an account? "),
                           GestureDetector(
                             onTap: () {
-                              // เมื่อกดปุ่มนี้จะไปยังหน้า Signup
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => Signup()),
-                              );
+                              Get.to(() => const Signup());
                             },
-                            child: Text(
+                            child: const Text(
                               "Sign Up",
                               style: TextStyle(
                                 color: Color(0xFF412160),
@@ -127,15 +133,15 @@ class _LoginState extends State<Login> {
       child: TextField(
         controller: controller,
         decoration: InputDecoration(
-          prefixIcon: Icon(icon, color: Color(0xFF412160)),
+          prefixIcon: Icon(icon, color: const Color(0xFF412160)),
           hintText: hintText,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(30),
-            borderSide: BorderSide(color: Color(0xFF412160)),
+            borderSide: const BorderSide(color: Color(0xFF412160)),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(30),
-            borderSide: BorderSide(color: Color(0xFF412160)),
+            borderSide: const BorderSide(color: Color(0xFF412160)),
           ),
         ),
       ),
@@ -150,12 +156,12 @@ class _LoginState extends State<Login> {
         controller: _passwordController,
         obscureText: !_isPasswordVisible,
         decoration: InputDecoration(
-          prefixIcon: Icon(icon, color: Color(0xFF412160)),
+          prefixIcon: Icon(icon, color: const Color(0xFF412160)),
           hintText: hintText,
           suffixIcon: IconButton(
             icon: Icon(
               _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
-              color: Color(0xFF412160),
+              color: const Color(0xFF412160),
             ),
             onPressed: () {
               setState(() {
@@ -165,14 +171,55 @@ class _LoginState extends State<Login> {
           ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(30),
-            borderSide: BorderSide(color: Color(0xFF412160)),
+            borderSide: const BorderSide(color: Color(0xFF412160)),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(30),
-            borderSide: BorderSide(color: Color(0xFF412160)),
+            borderSide: const BorderSide(color: Color(0xFF412160)),
           ),
         ),
       ),
     );
+  }
+
+  void cheacklogin() async {
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      setState(() {
+        text = 'กรุณากรอก Email และ Password ให้ถูกต้อง';
+      });
+      return;
+    }
+
+    // ดึงข้อมูลจาก Firestore
+    QuerySnapshot snapshot = await FirebaseFirestore.instance
+        .collection('Users')
+        .where('email', isEqualTo: _emailController.text)
+        .get();
+
+    if (snapshot.docs.isNotEmpty) {
+      // พบอีเมลในฐานข้อมูล
+      String storedPassword =
+          snapshot.docs.first['password']; // ดึงรหัสผ่านจากฐานข้อมูล
+      String userType =
+          snapshot.docs.first['type']; // ดึงประเภทผู้ใช้จากฐานข้อมูล
+      if (storedPassword == _passwordController.text) {
+        log('เข้าสู่ระบบสำเร็จ');
+        if (userType == 'user') {
+          Get.to(() => const HomeUserpage());
+        } else {
+          Get.to(() => const HomeRiderPage());
+        }
+      } else {
+        setState(() {
+          text = 'รหัสผ่านไม่ถูกต้อง';
+        });
+        return;
+      }
+    } else {
+      setState(() {
+        text = 'ไม่พบอีเมลนี้ในระบบ';
+      });
+      return;
+    }
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:quickrider/page/DriverSignUp.dart';
 import 'package:quickrider/page/UserSignUp.dart';
 
@@ -18,6 +19,13 @@ class _SignupState extends State<Signup> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
+            IconButton(
+              icon: const Icon(Icons.arrow_back,
+                  color: Colors.white), // ไอคอนลูกศรสีขาว
+              onPressed: () {
+                Navigator.pop(context); // กดปุ่มเพื่อกลับไปหน้าก่อนหน้านี้
+              },
+            ),
             Text(
               'Quick Ride',
               style: TextStyle(
@@ -38,10 +46,7 @@ class _SignupState extends State<Signup> {
             ElevatedButton(
               onPressed: () {
                 // เมื่อกดปุ่มนี้จะไปยังหน้า DriverSignup
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => DriverSignup()),
-                );
+                Get.to(() => const DriverSignup());
               },
               style: ElevatedButton.styleFrom(
                 foregroundColor: Colors.black,
@@ -59,10 +64,7 @@ class _SignupState extends State<Signup> {
             ElevatedButton(
               onPressed: () {
                 // เมื่อกดปุ่มนี้จะไปยังหน้า DriverSignup
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => UserSignup()),
-                );
+                Get.to(() => const UserSignup());
               },
               style: ElevatedButton.styleFrom(
                 foregroundColor: Colors.black,
