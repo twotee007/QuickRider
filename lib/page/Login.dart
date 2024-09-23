@@ -68,8 +68,7 @@ class _LoginState extends State<Login> {
                         ),
                       ),
                       const SizedBox(height: 20), // ขยับลงให้ฟิลด์ห่างจากหัวข้อ
-                      _buildTextField(
-                          Icons.person, 'Email or Number', _emailController),
+                      _buildTextField(Icons.person, 'Email', _emailController),
                       _buildPasswordField(Icons.lock, 'Password'),
                       Center(child: Text(text)),
                       const SizedBox(

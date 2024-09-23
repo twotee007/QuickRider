@@ -19,21 +19,35 @@ class _SignupState extends State<Signup> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            IconButton(
-              icon: const Icon(Icons.arrow_back,
-                  color: Colors.white), // ไอคอนลูกศรสีขาว
-              onPressed: () {
-                Navigator.pop(context); // กดปุ่มเพื่อกลับไปหน้าก่อนหน้านี้
-              },
-            ),
-            Text(
-              'Quick Ride',
-              style: TextStyle(
-                fontSize: 30,
-                color: Colors.white,
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 20.0), // เพิ่ม padding เพื่อขยับ Row ไม่ให้ติดขอบ
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(
+                      Icons.arrow_back,
+                      color: Colors.white, // ไอคอนลูกศรสีขาว
+                    ),
+                    onPressed: () {
+                      Navigator.pop(
+                          context); // กดปุ่มเพื่อกลับไปหน้าก่อนหน้านี้
+                    },
+                  ),
+
+                  Spacer(), // ทำให้ Quick Ride อยู่ตรงกลาง
+                  Text(
+                    'Quick Ride',
+                    style: TextStyle(
+                      fontSize: 30,
+                      color: Colors.white,
+                    ),
+                  ),
+                  Spacer(flex: 2), // ปรับขนาดเพื่อให้ระยะห่างขวาเหมาะสม
+                ],
               ),
             ),
-            SizedBox(height: 80),
+            SizedBox(height: 90),
             Text(
               'Sign Up',
               style: TextStyle(
@@ -42,7 +56,7 @@ class _SignupState extends State<Signup> {
                 fontWeight: FontWeight.bold, // ตัวหนา (ถ้าต้องการ)
               ),
             ),
-            SizedBox(height: 60),
+            SizedBox(height: 80),
             ElevatedButton(
               onPressed: () {
                 // เมื่อกดปุ่มนี้จะไปยังหน้า DriverSignup
@@ -63,7 +77,7 @@ class _SignupState extends State<Signup> {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                // เมื่อกดปุ่มนี้จะไปยังหน้า DriverSignup
+                // เมื่อกดปุ่มนี้จะไปยังหน้า UserSignup
                 Get.to(() => const UserSignup());
               },
               style: ElevatedButton.styleFrom(
