@@ -8,8 +8,6 @@ import 'package:provider/provider.dart';
 import 'package:quickrider/config/shared/appData.dart';
 import 'package:quickrider/firebase_options.dart';
 import 'package:quickrider/page/Login.dart';
-import 'package:quickrider/page/PageRider/HomeRider.dart';
-import 'package:quickrider/page/PageUser/HomeUser.dart';
 
 void main() async {
   // Connect firebase
@@ -37,7 +35,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetMaterialApp(
       title: 'Flutter Demo',
-      home: HomeUserpage(),
+      home: Login(),
     );
   }
 }
