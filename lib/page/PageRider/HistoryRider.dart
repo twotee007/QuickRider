@@ -3,14 +3,14 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class HomeRiderPage extends StatefulWidget {
-  const HomeRiderPage({super.key});
+class HistoryPageRider extends StatefulWidget {
+  const HistoryPageRider({super.key});
 
   @override
-  State<HomeRiderPage> createState() => _HomeRiderPageState();
+  State<HistoryPageRider> createState() => _HistoryPageRiderState();
 }
 
-class _HomeRiderPageState extends State<HomeRiderPage> {
+class _HistoryPageRiderState extends State<HistoryPageRider> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -59,7 +59,7 @@ class _HomeRiderPageState extends State<HomeRiderPage> {
                             mainAxisAlignment: MainAxisAlignment.start,
                             children: [
                               Text(
-                                'ออเดอร์มาใหม่',
+                                'ประวัติการส่ง',
                                 style: TextStyle(
                                   fontSize: 18,
                                   color: Colors.black,
@@ -96,82 +96,60 @@ class _HomeRiderPageState extends State<HomeRiderPage> {
       children: [
         Stack(
           children: [
-            GestureDetector(
-              onTap: () {
-                // Call your method here
-                log('กดสำเร็จ');
-              },
-              child: Container(
-                width: 360,
-                height: 100,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF412160),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0, vertical: 12.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'ผู้จัดส่ง : $namesender',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'ส่งให้คุณ : $namereceiver',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                      ElevatedButton(
-                        onPressed: () {},
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              const Color.fromARGB(255, 18, 172, 82),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 30, vertical: 10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                        ),
-                        child: const Text(
-                          'รับงาน',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+            Container(
+              width: 360,
+              height: 100,
+              decoration: BoxDecoration(
+                color: const Color(0xFF412160),
+                borderRadius: BorderRadius.circular(20),
               ),
-            ),
-            const Positioned(
-              bottom: 5,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: Text(
-                  'คลิกดูรายละเอียด',
-                  style: TextStyle(
-                    color: Color.fromARGB(255, 216, 58, 58),
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0, vertical: 12.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'ผู้จัดส่ง : $namesender',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'ส่งให้คุณ : $namereceiver',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                    ElevatedButton(
+                      onPressed: () {},
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color.fromARGB(255, 18, 172, 82),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
+                      child: const Text(
+                        'ดูรายละเอียด',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

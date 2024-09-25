@@ -1,15 +1,15 @@
-import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:quickrider/page/ChangePage/NavigationBarUser.dart';
 
-class HomeUserpage extends StatefulWidget {
-  const HomeUserpage({super.key});
+class HistoryPageUser extends StatefulWidget {
+  const HistoryPageUser({super.key});
 
   @override
-  State<HomeUserpage> createState() => _HomeUserpageState();
+  State<HistoryPageUser> createState() => _HistoryPageUserState();
 }
 
-class _HomeUserpageState extends State<HomeUserpage>
+class _HistoryPageUserState extends State<HistoryPageUser>
     with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
@@ -17,27 +17,6 @@ class _HomeUserpageState extends State<HomeUserpage>
 
     return Scaffold(
       backgroundColor: const Color(0xFF412160),
-      floatingActionButton: RawMaterialButton(
-        onPressed: () {
-          // ฟังก์ชันที่จะทำงานเมื่อกดปุ่ม +
-        },
-        shape: const CircleBorder(),
-        elevation: 0, // ลดการยกของปุ่ม
-        fillColor: Colors.transparent, // ทำให้พื้นหลังโปร่งใส
-        child: Container(
-          decoration: const BoxDecoration(
-            shape: BoxShape.circle,
-            image: DecorationImage(
-              image: AssetImage(
-                  'assets/img/Plus.png'), // เปลี่ยนเป็น path ของไฟล์รูปภาพที่ใช้
-              fit: BoxFit.cover,
-            ),
-          ),
-          width: 60, // กำหนดขนาดที่เหมาะสม
-          height: 60,
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: Stack(
         children: [
           Align(
@@ -69,8 +48,8 @@ class _HomeUserpageState extends State<HomeUserpage>
                             indicatorColor:
                                 const Color.fromARGB(255, 127, 86, 166),
                             tabs: const [
-                              Tab(text: 'สินค้าที่คุณส่ง'),
-                              Tab(text: 'สินค้าที่คุณรับ'),
+                              Tab(text: 'ประวัติสินค้าที่คุณส่ง'),
+                              Tab(text: 'ประวัติสินค้าที่คุณได้รับ'),
                             ],
                           ),
                           Expanded(
@@ -89,7 +68,7 @@ class _HomeUserpageState extends State<HomeUserpage>
                 ],
               ),
             ),
-          ),
+          )
         ],
       ),
     );
@@ -170,7 +149,7 @@ class _HomeUserpageState extends State<HomeUserpage>
                         ),
                       ),
                       child: const Text(
-                        'ดูสถานะ',
+                        'รายละเอียด',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 18,
