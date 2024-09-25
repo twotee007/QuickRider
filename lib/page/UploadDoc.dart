@@ -246,9 +246,13 @@ class _UploadDocumentsPageState extends State<UploadDocumentsPage> {
           }
           await FirebaseFirestore.instance.collection('Users').add(userData);
           if (type == 'user') {
-            Get.to(() => const HomeUserpage());
+            Get.to(() => const HomeUserpage(),
+                transition: Transition.cupertino, // Specify the transition here
+                duration: Duration(milliseconds: 300));
           } else {
-            Get.to(() => const HomeRiderPage());
+            Get.to(() => const HomeRiderPage(),
+                transition: Transition.cupertino, // Specify the transition here
+                duration: Duration(milliseconds: 300));
           }
         });
       } catch (e) {

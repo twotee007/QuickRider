@@ -1,6 +1,9 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:quickrider/page/ChangePage/NavigationBarUser.dart';
+import 'package:quickrider/page/PageUser/AddProduct.dart';
 
 class HomeUserpage extends StatefulWidget {
   const HomeUserpage({super.key});
@@ -11,6 +14,14 @@ class HomeUserpage extends StatefulWidget {
 
 class _HomeUserpageState extends State<HomeUserpage>
     with TickerProviderStateMixin {
+  int _selectedIndex = 0;
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     TabController _tabController = TabController(length: 2, vsync: this);
@@ -19,7 +30,9 @@ class _HomeUserpageState extends State<HomeUserpage>
       backgroundColor: const Color(0xFF412160),
       floatingActionButton: RawMaterialButton(
         onPressed: () {
-          // ฟังก์ชันที่จะทำงานเมื่อกดปุ่ม +
+          Get.to(() => const AddProductPage(),
+              transition: Transition.rightToLeft,
+              duration: const Duration(milliseconds: 300));
         },
         shape: const CircleBorder(),
         elevation: 0, // ลดการยกของปุ่ม
@@ -91,6 +104,10 @@ class _HomeUserpageState extends State<HomeUserpage>
             ),
           ),
         ],
+      ),
+      bottomNavigationBar: CustomBottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
       ),
     );
   }

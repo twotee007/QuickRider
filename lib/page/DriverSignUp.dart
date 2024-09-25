@@ -406,7 +406,9 @@ class _DriverSignupState extends State<DriverSignup> {
       context.read<AppData>().type = 'rider';
 
       // นำไปสู่หน้าถัดไป
-      Get.to(() => const UploadDocumentsPage());
+      Get.to(() => const UploadDocumentsPage(),
+          transition: Transition.cupertino, // Specify the transition here
+          duration: Duration(milliseconds: 300));
     } catch (e) {
       setState(() {
         text = 'เกิดข้อผิดพลาด: ${e.toString()}';

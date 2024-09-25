@@ -11,6 +11,14 @@ class HistoryPageUser extends StatefulWidget {
 
 class _HistoryPageUserState extends State<HistoryPageUser>
     with TickerProviderStateMixin {
+  int _selectedIndex = 1;
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     TabController _tabController = TabController(length: 2, vsync: this);
@@ -70,6 +78,10 @@ class _HistoryPageUserState extends State<HistoryPageUser>
             ),
           )
         ],
+      ),
+      bottomNavigationBar: CustomBottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
       ),
     );
   }

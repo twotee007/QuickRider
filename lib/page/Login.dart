@@ -102,7 +102,13 @@ class _LoginState extends State<Login> {
                           const Text("Don't have an account? "),
                           GestureDetector(
                             onTap: () {
-                              Get.to(() => const Signup());
+                              Get.to(
+                                () => Signup(),
+                                transition: Transition.cupertino,
+                                duration: Duration(
+                                    milliseconds:
+                                        300), // ระยะเวลาที่ใช้ในการเปลี่ยนหน้า
+                              );
                             },
                             child: const Text(
                               "Sign Up",

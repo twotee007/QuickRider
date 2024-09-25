@@ -6,11 +6,12 @@ import 'package:quickrider/page/PageUser/ProfileUser.dart';
 
 class CustomBottomNavigationBar extends StatelessWidget {
   final int currentIndex; // ค่า index ปัจจุบัน
+  final ValueChanged<int> onTap; // เพิ่ม callback สำหรับการคลิก
 
   const CustomBottomNavigationBar({
     Key? key,
     required this.currentIndex,
-    required void Function(int index) onTap,
+    required this.onTap, // รับฟังก์ชัน onTap จาก parent widget
   }) : super(key: key);
 
   @override
@@ -18,8 +19,6 @@ class CustomBottomNavigationBar extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white, // สีพื้นหลังสำหรับ navigation bar
-        borderRadius:
-            BorderRadius.vertical(top: Radius.circular(30)), // โค้งที่ด้านบน
         boxShadow: const [
           BoxShadow(
             color: Colors.black12, // สีของเงา
@@ -29,6 +28,8 @@ class CustomBottomNavigationBar extends StatelessWidget {
         ],
       ),
       child: ClipRRect(
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(30)), // โค้งที่ด้านบน
         child: BottomNavigationBar(
           items: const <BottomNavigationBarItem>[
             BottomNavigationBarItem(
@@ -45,11 +46,12 @@ class CustomBottomNavigationBar extends StatelessWidget {
             ),
           ],
           currentIndex: currentIndex,
-          selectedItemColor: Colors.purple,
+          selectedItemColor: Color.fromARGB(255, 89, 61, 117),
           unselectedItemColor: Colors.grey,
-          type: BottomNavigationBarType.shifting,
+          type: BottomNavigationBarType.fixed, // ใช้ shifting เพื่อความสมูท
           onTap: (index) {
-            _onItemTapped(context, index);
+            onTap(index); // เรียกใช้งานฟังก์ชัน onTap
+            _onItemTapped(index); // ร่วมกับการเปลี่ยนหน้า
           },
           iconSize: 30,
           selectedFontSize: 14,
@@ -61,18 +63,23 @@ class CustomBottomNavigationBar extends StatelessWidget {
     );
   }
 
-  void _onItemTapped(BuildContext context, int index) {
+  void _onItemTapped(int index) {
+    // ใช้ Get.off เพื่อปิดหน้าปัจจุบันและเปิดหน้าใหม่โดยไม่มี transition
     switch (index) {
       case 0:
-        Get.to(() => const HomeUserpage());
+        Get.to(() => const HomeUserpage(),
+            transition: Transition.noTransition,
+            duration: const Duration(milliseconds: 300));
         break;
       case 1:
-        // เปลี่ยนหน้าไป HistoryPage
-        Get.to(() => const HistoryPageUser());
+        Get.to(() => const HistoryPageUser(),
+            transition: Transition.noTransition,
+            duration: const Duration(milliseconds: 300));
         break;
       case 2:
-        // เปลี่ยนหน้าไป ProfilePage
-        Get.to(() => const ProfilePageUser());
+        Get.to(() => const ProfilePageUser(),
+            transition: Transition.noTransition,
+            duration: const Duration(milliseconds: 300));
         break;
     }
   }

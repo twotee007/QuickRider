@@ -30,8 +30,7 @@ class _SignupState extends State<Signup> {
                       color: Colors.white, // ไอคอนลูกศรสีขาว
                     ),
                     onPressed: () {
-                      Navigator.pop(
-                          context); // กดปุ่มเพื่อกลับไปหน้าก่อนหน้านี้
+                      Get.back();
                     },
                   ),
 
@@ -60,7 +59,12 @@ class _SignupState extends State<Signup> {
             ElevatedButton(
               onPressed: () {
                 // เมื่อกดปุ่มนี้จะไปยังหน้า DriverSignup
-                Get.to(() => const DriverSignup());
+                Get.to(
+                  () => const DriverSignup(),
+                  transition:
+                      Transition.cupertino, // ใช้ Transition.circularReveal
+                  duration: Duration(milliseconds: 300),
+                );
               },
               style: ElevatedButton.styleFrom(
                 foregroundColor: Colors.black,
@@ -77,8 +81,12 @@ class _SignupState extends State<Signup> {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                // เมื่อกดปุ่มนี้จะไปยังหน้า UserSignup
-                Get.to(() => const UserSignup());
+                Get.to(
+                  () => UserSignup(),
+                  transition:
+                      Transition.cupertino, // Specify the transition here
+                  duration: Duration(milliseconds: 300),
+                );
               },
               style: ElevatedButton.styleFrom(
                 foregroundColor: Colors.black,
