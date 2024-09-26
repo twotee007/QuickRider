@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:quickrider/co/DataUser.dart';
 import 'package:quickrider/page/ChangePage/NavigationBarUser.dart';
 import 'package:quickrider/page/PageUser/AddProduct.dart';
 import 'package:quickrider/page/PageUser/SharedWidget.dart';
@@ -17,8 +16,8 @@ class HomeUserpage extends StatefulWidget {
 
 class _HomeUserpageState extends State<HomeUserpage>
     with TickerProviderStateMixin {
+  late Map<String, dynamic>? user;
   int _selectedIndex = 0;
-  late User user;
   String name = '';
   String url = '';
   final FirebaseFirestore db = FirebaseFirestore.instance;
@@ -69,8 +68,8 @@ class _HomeUserpageState extends State<HomeUserpage>
         children: [
           Align(
             alignment: Alignment.topCenter,
-            child: FutureBuilder(
-              future: loadDate, // ใช้ future ที่สร้างขึ้นจาก loadDataAstnc
+            child: FutureBuilder<void>(
+              future: loadDate,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(
@@ -83,17 +82,12 @@ class _HomeUserpageState extends State<HomeUserpage>
                 if (snapshot.connectionState == ConnectionState.done) {
                   if (user != null) {
                     return cycletop(
-                      user.fullname, // แทนที่ 'จูเนียร์' ด้วยชื่อผู้ใช้
-                      user.img, // แทนที่ URL รูปภาพด้วย URL ที่ได้จาก user
+                      user!['fullname'] ?? 'ไม่มีชื่อ', // ใช้ชื่อจาก Map
+                      user!['img'] ?? '', // ใช้ URL รูปจาก Map
                     );
                   }
-                  return Center(
-                      child:
-                          Text('No user data found')); // กรณีไม่มีข้อมูลผู้ใช้
                 }
-                return const Center(
-                    child:
-                        Text('No data available')); // กรณีที่ไม่เข้าเงื่อนไขใดๆ
+                return Center(child: Text('No data found'));
               },
             ),
           ),
@@ -247,15 +241,15 @@ class _HomeUserpageState extends State<HomeUserpage>
   Future<void> loadDataAstnc() async {
     try {
       // เข้าถึงเอกสารโดยใช้ Document ID
-      DocumentSnapshot docSnapshot =
+      var docSnapshot =
           await db.collection('Users').doc('3cKAN61lg3nnq8uxjv56').get();
 
       if (docSnapshot.exists) {
         log('Document ID: ${docSnapshot.id}'); // แสดง ID ของเอกสาร
 
-        // เก็บข้อมูลใน User object
-        user = User.fromMap(docSnapshot.data() as Map<String, dynamic>);
-        log('Data: ${user}'); // แสดงข้อมูลทั้งหมด
+        // เก็บข้อมูลใน Map
+        user = docSnapshot.data() as Map<String, dynamic>?;
+        log('Data: $user'); // แสดงข้อมูลทั้งหมด
 
         // อัปเดต UI เมื่อโหลดข้อมูลเสร็จ
         setState(() {}); // เรียกใช้ setState เพื่อให้ UI อัปเดต
