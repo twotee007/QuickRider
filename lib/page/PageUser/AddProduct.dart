@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:quickrider/page/PageUser/SharedWidget.dart';
 
 class AddProductPage extends StatefulWidget {
   const AddProductPage({super.key});
@@ -9,6 +11,103 @@ class AddProductPage extends StatefulWidget {
 }
 
 class _AddProductPageState extends State<AddProductPage> {
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _productNameController = TextEditingController();
+  final TextEditingController _productQuantityController =
+      TextEditingController();
+  final TextEditingController _productDetailsController =
+      TextEditingController();
+  final TextEditingController _shippingAddressController =
+      TextEditingController();
+
+  // จำลองฐานข้อมูลเบอร์โทรศัพท์
+  final List<String> _databasePhones = [
+    '0812345678',
+    '0923456789',
+    '0712345678',
+    '0923456789',
+    '0812345678',
+    '0423456789',
+    '0512345678',
+    '0623456789'
+  ];
+  List<String> _filteredPhones = [];
+
+  void _searchPhoneNumber(String input) {
+    setState(() {
+      if (input.isEmpty) {
+        _filteredPhones.clear();
+      } else {
+        _filteredPhones =
+            _databasePhones.where((phone) => phone.startsWith(input)).toList();
+      }
+    });
+  }
+
+  void _selectPhoneNumber(String phone) {
+    setState(() {
+      _phoneController.text = phone;
+      _filteredPhones.clear();
+    });
+  }
+
+  // ฟังก์ชันสร้าง TextField
+  Widget _buildTextField(String label, TextEditingController controller) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 5),
+        TextField(
+          controller: controller,
+          maxLines: null, // ทำให้จำนวนบรรทัดไม่จำกัด
+          keyboardType: TextInputType.text, // กำหนดให้เป็นข้อความ
+          textInputAction: TextInputAction.done, // ปุ่ม Done
+          decoration: InputDecoration(
+            border: const UnderlineInputBorder(), // เปลี่ยนเป็นเส้นใต้
+            isDense: true, // ลดขนาดของฟอร์มให้พอดี
+          ),
+        ),
+      ],
+    );
+  }
+
+// ฟังก์ชันสร้าง TextField สำหรับจำนวนสินค้า (เฉพาะตัวเลข)
+  Widget _buildQuantityField(String label, TextEditingController controller) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 5),
+        TextField(
+          controller: controller,
+          keyboardType:
+              TextInputType.number, // กำหนดให้เป็นแป้นพิมพ์สำหรับหมายเลข
+          inputFormatters: <TextInputFormatter>[
+            FilteringTextInputFormatter
+                .digitsOnly, // อนุญาตให้กรอกได้เฉพาะตัวเลข
+          ],
+          decoration: InputDecoration(
+            border: const UnderlineInputBorder(), // เปลี่ยนเป็นเส้นใต้
+            isDense: true, // ลดขนาดของฟอร์มให้พอดี
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -17,8 +116,10 @@ class _AddProductPageState extends State<AddProductPage> {
         children: [
           Align(
             alignment: Alignment.topCenter,
-            child: _cycletop('จูเนียร์',
-                'https://pbs.twimg.com/profile_images/1679205589803495428/W-FssaOO_200x200.jpg'),
+            child: cycletop(
+              'จูเนียร์',
+              'https://pbs.twimg.com/profile_images/1679205589803495428/W-FssaOO_200x200.jpg',
+            ),
           ),
           Align(
             alignment: Alignment.center,
@@ -28,12 +129,149 @@ class _AddProductPageState extends State<AddProductPage> {
                 children: [
                   Expanded(
                     child: Container(
-                      width: MediaQuery.of(context).size.width * 1,
+                      width: MediaQuery.of(context).size.width,
                       decoration: const BoxDecoration(
                         color: Color.fromARGB(255, 255, 255, 255),
                         borderRadius: BorderRadius.only(
                           topLeft: Radius.circular(25),
                           topRight: Radius.circular(25),
+                        ),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 20),
+
+                              // แถวสำหรับลูกศรกลับ
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.arrow_back, // ลูกศรกลับ
+                                      color: Color(0xFF412160),
+                                      size: 30,
+                                    ),
+                                    onPressed: () {
+                                      Navigator.pop(
+                                          context); // กลับไปหน้าก่อนหน้า
+                                    },
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(
+                                  height: 0), // ช่องว่างระหว่างลูกศรกับวงกลม
+
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const SizedBox(width: 30),
+                                  // วงกลมสำหรับไอคอนเพิ่มรูปภาพ
+                                  Container(
+                                    width: 120, // ปรับขนาดวงกลม
+                                    height: 120, // ปรับขนาดวงกลม
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Colors.white, // สีพื้นหลัง
+                                      border: Border.all(
+                                          color: Color(0xFF412160),
+                                          width: 1), // เส้นขอบสีดำ
+                                    ),
+                                    child: InkWell(
+                                      splashColor: Colors.purple
+                                          .withOpacity(0.5), // สีเมื่อกด
+                                      highlightColor: Colors.purple.withOpacity(
+                                          0.5), // สีพื้นหลังเมื่อกด
+                                      child: Center(
+                                        child: const Icon(
+                                          Icons.add_photo_alternate_outlined,
+                                          color: Color(0xFF412160),
+                                          size: 80, // ปรับขนาดไอคอน
+                                        ),
+                                      ),
+                                      onTap: () {
+                                        // โค้ดสำหรับเลือกรูปภาพ
+                                      },
+                                    ),
+                                  ),
+
+                                  // คอลัมน์สำหรับกรอบค้นหาเบอร์โทร
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      children: [
+                                        Container(
+                                          margin: const EdgeInsets.only(
+                                              left: 10), // ขยับไปทางซ้าย
+                                          child: SizedBox(
+                                            width: 150,
+                                            child: TextField(
+                                              controller: _phoneController,
+                                              onChanged: (value) {
+                                                _searchPhoneNumber(value);
+                                              },
+                                              keyboardType: TextInputType
+                                                  .phone, // กำหนดให้เป็นแป้นพิมพ์สำหรับหมายเลขโทรศัพท์
+                                              decoration: InputDecoration(
+                                                labelText: 'เบอร์โทรผู้รับ',
+                                                border: OutlineInputBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          10), // ขอบโค้ง
+                                                ),
+                                                isDense: true,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 0),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 30),
+                              _buildTextField(
+                                  'ชื่อสินค้า:', _productNameController),
+                              const SizedBox(height: 20),
+                              _buildQuantityField(
+                                  'จำนวนสินค้า:', _productQuantityController),
+                              const SizedBox(height: 20),
+                              _buildTextField('รายละเอียดสินค้า:',
+                                  _productDetailsController),
+                              const SizedBox(height: 20),
+                              _buildTextField('ที่อยู่จัดส่งที่:',
+                                  _shippingAddressController),
+                              const SizedBox(height: 30),
+                              Center(
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    // โค้ดสำหรับการจัดส่งสินค้า
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 50, vertical: 15),
+                                    backgroundColor: const Color(0xFF00C853),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(30),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'จัดส่ง',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 18,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -42,81 +280,91 @@ class _AddProductPageState extends State<AddProductPage> {
               ),
             ),
           ),
+
+          // ส่วนกรอบผลการค้นหา
+          if (_filteredPhones.isNotEmpty)
+            Positioned(
+              left: 20,
+              right: 20,
+              top: 310, // ปรับตำแหน่งตามต้องการ
+              child: Material(
+                elevation: 5,
+                borderRadius: BorderRadius.circular(5),
+                child: Container(
+                  padding: const EdgeInsets.all(8), // เพิ่ม padding ภายในกรอบ
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey),
+                    borderRadius: BorderRadius.circular(5),
+                    color: Colors.white,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: _filteredPhones.map((phone) {
+                      return GestureDetector(
+                        onTap: () {
+                          _selectPhoneNumber(phone);
+                        },
+                        child: Container(
+                          // กรอบใหม่สำหรับแต่ละหมายเลข
+                          margin: const EdgeInsets.symmetric(
+                              vertical: 4), // ระยะห่างระหว่างหมายเลข
+                          padding: const EdgeInsets.all(8), // Padding ภายในกรอบ
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey), // ขอบกรอบ
+                            borderRadius: BorderRadius.circular(5), // ขอบโค้ง
+                            color: Colors.white,
+                          ),
+                          child: RichText(
+                            text: TextSpan(
+                              children: _highlightMatchedText(
+                                  phone, _phoneController.text),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
   }
 
-  Widget _cycletop(String name, String url) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 35),
-      child: Container(
-        width: 360,
-        height: 80,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text.rich(
-                    TextSpan(
-                      children: [
-                        TextSpan(
-                          text: 'User : ',
-                          style: GoogleFonts.roboto(
-                            textStyle: const TextStyle(
-                              fontSize: 20,
-                              color: Colors.black,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'คุณ$name',
-                          style: GoogleFonts.roboto(
-                            textStyle: const TextStyle(
-                              fontSize: 20,
-                              color: Colors.black,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: ClipOval(
-                child: Image.network(
-                  url,
-                  width: 60,
-                  height: 60,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      width: 50,
-                      height: 50,
-                      color: Colors.grey,
-                      child:
-                          const Center(child: Text('ไม่สามารถโหลดรูปภาพได้')),
-                    );
-                  },
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  List<TextSpan> _highlightMatchedText(String fullText, String searchText) {
+    final List<TextSpan> spans = [];
+    if (searchText.isEmpty) {
+      spans.add(TextSpan(text: fullText));
+      return spans;
+    }
+
+    int start = 0;
+    int indexOfHighlight = fullText.indexOf(searchText);
+
+    while (indexOfHighlight != -1) {
+      if (indexOfHighlight > start) {
+        spans.add(TextSpan(text: fullText.substring(start, indexOfHighlight)));
+      }
+
+      spans.add(TextSpan(
+        text: fullText.substring(
+            indexOfHighlight, indexOfHighlight + searchText.length),
+        style: const TextStyle(color: Colors.green),
+      ));
+
+      start = indexOfHighlight + searchText.length;
+      indexOfHighlight = fullText.indexOf(searchText, start);
+    }
+
+    if (start < fullText.length) {
+      spans.add(TextSpan(text: fullText.substring(start)));
+    }
+
+    return spans;
   }
 }

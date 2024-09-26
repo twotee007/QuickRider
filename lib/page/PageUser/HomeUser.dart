@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:quickrider/page/ChangePage/NavigationBarUser.dart';
 import 'package:quickrider/page/PageUser/AddProduct.dart';
+import 'package:quickrider/page/PageUser/SharedWidget.dart';
 
 class HomeUserpage extends StatefulWidget {
   const HomeUserpage({super.key});
@@ -55,7 +56,8 @@ class _HomeUserpageState extends State<HomeUserpage>
         children: [
           Align(
             alignment: Alignment.topCenter,
-            child: _cycletop('จูเนียร์',
+            child: cycletop(
+                'จูเนียร์', //ใช้cycletop ที่มาจากSharedWidgetเพื่อใช้ร่วมกันกับทุกหน้า เพื่อไม่ต้องเเก้ไขหลายจุด เติ้ลเองที่comment
                 'https://pbs.twimg.com/profile_images/1679205589803495428/W-FssaOO_200x200.jpg'),
           ),
           Align(
@@ -202,79 +204,6 @@ class _HomeUserpageState extends State<HomeUserpage>
         ),
         const SizedBox(height: 10),
       ],
-    );
-  }
-
-  Widget _cycletop(String name, String url) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 35),
-      child: Container(
-        width: 360,
-        height: 80,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text.rich(
-                    TextSpan(
-                      children: [
-                        TextSpan(
-                          text: 'User : ',
-                          style: GoogleFonts.roboto(
-                            textStyle: const TextStyle(
-                              fontSize: 20,
-                              color: Colors.black,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'คุณ$name',
-                          style: GoogleFonts.roboto(
-                            textStyle: const TextStyle(
-                              fontSize: 20,
-                              color: Colors.black,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: ClipOval(
-                child: Image.network(
-                  url,
-                  width: 60,
-                  height: 60,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      width: 50,
-                      height: 50,
-                      color: Colors.grey,
-                      child:
-                          const Center(child: Text('ไม่สามารถโหลดรูปภาพได้')),
-                    );
-                  },
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
