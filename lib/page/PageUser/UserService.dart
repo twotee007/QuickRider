@@ -32,47 +32,12 @@ class UserService extends GetxController {
   // ฟังก์ชันอัปเดตข้อมูลผู้ใช้ใน Firestore
   Future<void> updateUserData({
     required String fullname,
-    required String email,
-    required String phone,
-    required String date,
-    required String address,
-    required String password,
-    String imgUrl = '', // Optional image URL
+    required String imgUrl, // Optional image URL
   }) async {
-    String userid = box.read('Userid');
-
-    if (userid == null || userid.isEmpty) {
-      print('User ID is null or empty.');
-      return;
-    }
-
     try {
-      // Create a map of updated user data
-      Map<String, dynamic> updatedData = {
-        'fullname': fullname,
-        'email': email,
-        'phone': phone,
-        'date': date,
-        'address': address,
-        'password': password,
-      };
-
-      // If imgUrl is provided, add it to the map
-      if (imgUrl.isNotEmpty) {
-        updatedData['img'] = imgUrl; // Update the image URL if it exists
-      }
-
-      // อัปเดตข้อมูลใน Firestore
-      await db.collection('Users').doc(userid).update(updatedData);
-
       // อัปเดตข้อมูลใน local `user`
       user.updateAll((key, value) {
         if (key == 'fullname') return fullname;
-        if (key == 'email') return email;
-        if (key == 'phone') return phone;
-        if (key == 'date') return date;
-        if (key == 'address') return address;
-        if (key == 'password') return password;
         if (key == 'img') return imgUrl; // Update the image URL if it exists
         return value;
       });
@@ -85,9 +50,4 @@ class UserService extends GetxController {
 
   String get name => user['fullname'] ?? 'ไม่มีชื่อ';
   String get url => user['img'] ?? '';
-  String get email => user['email'] ?? '';
-  String get phone => user['phone'] ?? '';
-  String get date => user['date'] ?? '';
-  String get address => user['address'] ?? '';
-  String get password => user['password'] ?? '';
 }

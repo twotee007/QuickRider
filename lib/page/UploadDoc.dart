@@ -73,16 +73,16 @@ class _UploadDocumentsPageState extends State<UploadDocumentsPage> {
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               ListTile(
-                leading: Icon(Icons.camera_alt),
-                title: Text('ถ่ายรูป'),
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('ถ่ายรูป'),
                 onTap: () {
                   Navigator.pop(context);
                   _pickImage(ImageSource.camera);
                 },
               ),
               ListTile(
-                leading: Icon(Icons.photo),
-                title: Text('เลือกจากแกลเลอรี่'),
+                leading: const Icon(Icons.photo),
+                title: const Text('เลือกจากแกลเลอรี่'),
                 onTap: () {
                   Navigator.pop(context);
                   _pickImage(ImageSource.gallery);
@@ -98,7 +98,7 @@ class _UploadDocumentsPageState extends State<UploadDocumentsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF412160),
+      backgroundColor: const Color(0xFF412160),
       body: Stack(
         children: [
           SingleChildScrollView(
@@ -107,18 +107,18 @@ class _UploadDocumentsPageState extends State<UploadDocumentsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       IconButton(
-                        icon: Icon(Icons.arrow_back, color: Colors.white),
+                        icon: const Icon(Icons.arrow_back, color: Colors.white),
                         onPressed: () {
                           Navigator.pop(context);
                         },
                       ),
-                      Spacer(),
-                      Text(
+                      const Spacer(),
+                      const Text(
                         'Quick Ride',
                         style: TextStyle(
                           fontSize: 30,
@@ -126,12 +126,12 @@ class _UploadDocumentsPageState extends State<UploadDocumentsPage> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      Spacer(flex: 2),
+                      const Spacer(flex: 2),
                     ],
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   Container(
-                    padding: EdgeInsets.all(30),
+                    padding: const EdgeInsets.all(30),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(20),
@@ -139,7 +139,7 @@ class _UploadDocumentsPageState extends State<UploadDocumentsPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Text(
+                        const Text(
                           'SIGN UP',
                           style: TextStyle(
                             fontSize: 25,
@@ -147,8 +147,8 @@ class _UploadDocumentsPageState extends State<UploadDocumentsPage> {
                             color: Color(0xFF412160),
                           ),
                         ),
-                        SizedBox(height: 20),
-                        Text(
+                        const SizedBox(height: 20),
+                        const Text(
                           'Upload Documents',
                           style: TextStyle(
                             fontSize: 18,
@@ -156,7 +156,7 @@ class _UploadDocumentsPageState extends State<UploadDocumentsPage> {
                             color: Color(0xFF412160),
                           ),
                         ),
-                        SizedBox(height: 20),
+                        const SizedBox(height: 20),
                         GestureDetector(
                           onTap: () {
                             _showImageSourceActionSheet(context);
@@ -173,14 +173,14 @@ class _UploadDocumentsPageState extends State<UploadDocumentsPage> {
                                       height: 100,
                                     ),
                                   )
-                                : Icon(
+                                : const Icon(
                                     Icons.person_add_alt_1,
                                     color: Color(0xFF412160),
                                     size: 50,
                                   ),
                           ),
                         ),
-                        SizedBox(height: 20),
+                        const SizedBox(height: 20),
                         ElevatedButton(
                           onPressed: isUploading
                               ? null
@@ -188,8 +188,8 @@ class _UploadDocumentsPageState extends State<UploadDocumentsPage> {
                                   uploadusersToFirebase();
                                 },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Color(0xFF412160),
-                            padding: EdgeInsets.symmetric(vertical: 15),
+                            backgroundColor: const Color(0xFF412160),
+                            padding: const EdgeInsets.symmetric(vertical: 15),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30),
                             ),
@@ -204,20 +204,20 @@ class _UploadDocumentsPageState extends State<UploadDocumentsPage> {
                             ),
                           ),
                         ),
-                        SizedBox(height: 20),
+                        const SizedBox(height: 20),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text("Already have an account? "),
+                            const Text("Already have an account? "),
                             GestureDetector(
                               onTap: () {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) => Login()),
+                                      builder: (context) => const Login()),
                                 );
                               },
-                              child: Text(
+                              child: const Text(
                                 "Sign In",
                                 style: TextStyle(
                                   color: Color(0xFF412160),
@@ -230,7 +230,7 @@ class _UploadDocumentsPageState extends State<UploadDocumentsPage> {
                       ],
                     ),
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
@@ -238,7 +238,7 @@ class _UploadDocumentsPageState extends State<UploadDocumentsPage> {
           if (isUploading)
             Container(
               color: Colors.black.withOpacity(0.5),
-              child: Center(
+              child: const Center(
                 child: CircularProgressIndicator(),
               ),
             ),
@@ -253,7 +253,7 @@ class _UploadDocumentsPageState extends State<UploadDocumentsPage> {
         isUploading = true; // เริ่มการอัปโหลด
       });
       try {
-        String fileName = 'images/${Uuid().v4()}.jpg';
+        String fileName = 'images/${const Uuid().v4()}.jpg';
         Reference storageReference =
             FirebaseStorage.instance.ref().child(fileName);
         UploadTask uploadTask = storageReference.putFile(imageFile!);
@@ -288,13 +288,13 @@ class _UploadDocumentsPageState extends State<UploadDocumentsPage> {
             box.write('Userid', docId);
             Get.to(() => const HomeUserpage(),
                 transition: Transition.cupertino, // Specify the transition here
-                duration: Duration(milliseconds: 300));
+                duration: const Duration(milliseconds: 300));
           } else {
             box.write('isLoggedIn', true);
             box.write('Riderid', docId);
             Get.to(() => const HomeRiderPage(),
                 transition: Transition.cupertino, // Specify the transition here
-                duration: Duration(milliseconds: 300));
+                duration: const Duration(milliseconds: 300));
           }
         });
       } catch (e) {
