@@ -4,10 +4,12 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 
 import 'package:image_picker/image_picker.dart';
 import 'package:quickrider/page/PageUser/SharedWidget.dart';
+import 'package:quickrider/page/PageUser/UserService.dart';
 
 class AddProductPage extends StatefulWidget {
   const AddProductPage({super.key});
@@ -26,6 +28,7 @@ class _AddProductPageState extends State<AddProductPage> {
   final TextEditingController _shippingAddressController =
       TextEditingController();
   final ImagePicker _picker = ImagePicker();
+  final userService = Get.find<UserService>();
   File? _imageFile; // ตัวแปรสำหรับเก็บรูปภาพที่เลือก
   final box = GetStorage();
   final FirebaseFirestore db = FirebaseFirestore.instance;
@@ -44,7 +47,7 @@ class _AddProductPageState extends State<AddProductPage> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    loadDate = loadDataAstnc();
+    // loadDate = loadDataAstnc();
     phoneuser();
   }
 
@@ -182,27 +185,9 @@ class _AddProductPageState extends State<AddProductPage> {
         children: [
           Align(
             alignment: Alignment.topCenter,
-            child: FutureBuilder<void>(
-              future: loadDate,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
-                }
-                if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                }
-                if (snapshot.connectionState == ConnectionState.done) {
-                  if (user != null) {
-                    return cycletop(
-                      user!['fullname'] ?? 'ไม่มีชื่อ', // ใช้ชื่อจาก Map
-                      user!['img'] ?? '', // ใช้ URL รูปจาก Map
-                    );
-                  }
-                }
-                return Center(child: Text('No data found'));
-              },
+            child: cycletop(
+              userService.name, // ใช้ข้อมูลชื่อจาก UserService
+              userService.url, // ใช้ข้อมูล URL จาก UserService
             ),
           ),
           Align(
@@ -498,26 +483,26 @@ class _AddProductPageState extends State<AddProductPage> {
     return spans;
   }
 
-  Future<void> loadDataAstnc() async {
-    String userid = box.read('Userid');
-    try {
-      // เข้าถึงเอกสารโดยใช้ Document ID
-      var docSnapshot = await db.collection('Users').doc(userid).get();
+  // Future<void> loadDataAstnc() async {
+  //   String userid = box.read('Userid');
+  //   try {
+  //     // เข้าถึงเอกสารโดยใช้ Document ID
+  //     var docSnapshot = await db.collection('Users').doc(userid).get();
 
-      if (docSnapshot.exists) {
-        log('Document ID: ${docSnapshot.id}'); // แสดง ID ของเอกสาร
+  //     if (docSnapshot.exists) {
+  //       log('Document ID: ${docSnapshot.id}'); // แสดง ID ของเอกสาร
 
-        // เก็บข้อมูลใน Map
-        user = docSnapshot.data() as Map<String, dynamic>?;
-        log('Data: $user'); // แสดงข้อมูลทั้งหมด
+  //       // เก็บข้อมูลใน Map
+  //       user = docSnapshot.data() as Map<String, dynamic>?;
+  //       log('Data: $user'); // แสดงข้อมูลทั้งหมด
 
-        // อัปเดต UI เมื่อโหลดข้อมูลเสร็จ
-        setState(() {}); // เรียกใช้ setState เพื่อให้ UI อัปเดต
-      } else {
-        log('No user found with docId: ${docSnapshot.id}');
-      }
-    } catch (e) {
-      log('Error fetching user: $e');
-    }
-  }
+  //       // อัปเดต UI เมื่อโหลดข้อมูลเสร็จ
+  //       setState(() {}); // เรียกใช้ setState เพื่อให้ UI อัปเดต
+  //     } else {
+  //       log('No user found with docId: ${docSnapshot.id}');
+  //     }
+  //   } catch (e) {
+  //     log('Error fetching user: $e');
+  //   }
+  // }
 }

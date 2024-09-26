@@ -27,12 +27,13 @@ class _HomeUserpageState extends State<HomeUserpage>
     });
   }
 
-  // @override
-  // void initState() {
-  //   // TODO: implement initState
-  //   super.initState();
-  //   loadDate = loadDataAstnc();
-  // }
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    final userService = Get.put(UserService());
+    userService.loadUserData();
+  }
 
   @override
   Widget build(BuildContext context) {

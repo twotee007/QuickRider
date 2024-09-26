@@ -61,7 +61,6 @@ Widget cycletop(String name, String url) {
                     width: 50,
                     height: 50,
                     color: Colors.grey,
-                    child: const Center(child: Text('ไม่สามารถโหลดรูปภาพได้')),
                   );
                 },
               ),

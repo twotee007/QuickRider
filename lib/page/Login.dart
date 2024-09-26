@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:quickrider/page/PageRider/HomeRider.dart';
 import 'package:quickrider/page/PageUser/HomeUser.dart';
+import 'package:quickrider/page/PageUser/UserService.dart';
 import 'package:quickrider/page/signup.dart';
 
 class Login extends StatefulWidget {
@@ -215,6 +216,8 @@ class _LoginState extends State<Login> {
         if (userType == 'user') {
           box.write('isLoggedIn', true);
           box.write('Userid', docId);
+          final userService = Get.put(UserService());
+          userService.loadUserData();
           Get.to(() => const HomeUserpage());
         } else {
           box.write('isLoggedIn', true);

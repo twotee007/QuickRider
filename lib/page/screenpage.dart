@@ -5,6 +5,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:quickrider/page/Login.dart';
 import 'package:quickrider/page/PageRider/HomeRider.dart';
 import 'package:quickrider/page/PageUser/HomeUser.dart';
+import 'package:quickrider/page/PageUser/UserService.dart';
 
 class ScreenPage extends StatefulWidget {
   const ScreenPage({super.key});
