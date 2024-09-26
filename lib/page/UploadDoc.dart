@@ -53,6 +53,46 @@ class _UploadDocumentsPageState extends State<UploadDocumentsPage> {
     }
   }
 
+  Future<void> _pickImage(ImageSource source) async {
+    final XFile? pickedFile = await picker.pickImage(source: source);
+    if (pickedFile != null) {
+      setState(() {
+        imageFile = File(pickedFile.path); // อัปเดตรูปภาพในสถานะ
+      });
+    }
+  }
+
+  void _showImageSourceActionSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              ListTile(
+                leading: Icon(Icons.camera_alt),
+                title: Text('ถ่ายรูป'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.photo),
+                title: Text('เลือกจากแกลเลอรี่'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage(ImageSource.gallery);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -116,15 +156,8 @@ class _UploadDocumentsPageState extends State<UploadDocumentsPage> {
                         ),
                         SizedBox(height: 20),
                         GestureDetector(
-                          onTap: () async {
-                            final pickedImage = await picker.pickImage(
-                              source: ImageSource.gallery,
-                            );
-                            if (pickedImage != null) {
-                              setState(() {
-                                imageFile = File(pickedImage.path);
-                              });
-                            }
+                          onTap: () {
+                            _showImageSourceActionSheet(context);
                           },
                           child: CircleAvatar(
                             radius: 50,

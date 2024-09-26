@@ -1,6 +1,11 @@
+import 'dart:developer';
+import 'dart:io';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
+
+import 'package:image_picker/image_picker.dart';
 import 'package:quickrider/page/PageUser/SharedWidget.dart';
 
 class AddProductPage extends StatefulWidget {
@@ -19,24 +24,51 @@ class _AddProductPageState extends State<AddProductPage> {
       TextEditingController();
   final TextEditingController _shippingAddressController =
       TextEditingController();
+  final ImagePicker _picker = ImagePicker();
+  File? _imageFile; // ตัวแปรสำหรับเก็บรูปภาพที่เลือก
+  Future<void> _pickImage(ImageSource source) async {
+    final XFile? pickedFile = await _picker.pickImage(source: source);
+    if (pickedFile != null) {
+      setState(() {
+        _imageFile = File(pickedFile.path); // อัปเดตรูปภาพในสถานะ
+      });
+    }
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    phoneuser();
+  }
+
+  void phoneuser() async {
+    try {
+      QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection('Users')
+          .where('type', isEqualTo: 'user') // กรองเฉพาะประเภทผู้ใช้ 'user'
+          .get();
+
+      _databasePhones = snapshot.docs.map((doc) {
+        return doc['phone'] as String; // ดึงเบอร์โทรศัพท์จากเอกสาร
+      }).toList();
+
+      // ทำอะไรกับเบอร์โทรศัพท์ที่ค้นพบ เช่น แสดงใน UI หรืออื่น ๆ
+      log('User Phones: $_databasePhones');
+    } catch (e) {
+      print('Error fetching user phones: $e');
+    }
+  }
 
   // จำลองฐานข้อมูลเบอร์โทรศัพท์
-  final List<String> _databasePhones = [
-    '0812345678',
-    '0923456789',
-    '0712345678',
-    '0923456789',
-    '0812345678',
-    '0423456789',
-    '0512345678',
-    '0623456789'
-  ];
+  List<String> _databasePhones = []; // ประกาศตัวแปรที่ระดับคลาส
   List<String> _filteredPhones = [];
 
   void _searchPhoneNumber(String input) {
     setState(() {
       if (input.isEmpty) {
         _filteredPhones.clear();
+        _shippingAddressController.clear();
       } else {
         _filteredPhones =
             _databasePhones.where((phone) => phone.startsWith(input)).toList();
@@ -44,11 +76,39 @@ class _AddProductPageState extends State<AddProductPage> {
     });
   }
 
+  Future<void> _fetchUserAddress(String phone) async {
+    try {
+      DocumentSnapshot snapshot = await FirebaseFirestore.instance
+          .collection('Users')
+          .where('phone', isEqualTo: phone)
+          .limit(1)
+          .get()
+          .then((querySnapshot) => querySnapshot.docs.first);
+
+      if (snapshot.exists) {
+        String address =
+            snapshot['address'] as String; // สมมติว่า field ชื่อ 'address'
+        // ทำอะไรกับที่อยู่ที่ดึงมา เช่น แสดงใน UI
+        setState(() {
+          _shippingAddressController.text = address; // กรอกที่อยู่ใน TextField
+        });
+      }
+    } catch (e) {
+      print('Error fetching user address: $e');
+    }
+  }
+
   void _selectPhoneNumber(String phone) {
     setState(() {
       _phoneController.text = phone;
       _filteredPhones.clear();
     });
+
+    if (phone.isEmpty) {
+      _shippingAddressController.clear(); // ล้างที่อยู่เมื่อไม่มีเบอร์โทร
+    } else {
+      _fetchUserAddress(phone); // เรียกฟังก์ชันเพื่อดึงที่อยู่
+    }
   }
 
   // ฟังก์ชันสร้าง TextField
@@ -171,31 +231,46 @@ class _AddProductPageState extends State<AddProductPage> {
                                 children: [
                                   const SizedBox(width: 30),
                                   // วงกลมสำหรับไอคอนเพิ่มรูปภาพ
-                                  Container(
-                                    width: 120, // ปรับขนาดวงกลม
-                                    height: 120, // ปรับขนาดวงกลม
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: Colors.white, // สีพื้นหลัง
-                                      border: Border.all(
+                                  Center(
+                                    child: Container(
+                                      width: 120,
+                                      height: 120,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: Colors.white,
+                                        border: Border.all(
                                           color: Color(0xFF412160),
-                                          width: 1), // เส้นขอบสีดำ
-                                    ),
-                                    child: InkWell(
-                                      splashColor: Colors.purple
-                                          .withOpacity(0.5), // สีเมื่อกด
-                                      highlightColor: Colors.purple.withOpacity(
-                                          0.5), // สีพื้นหลังเมื่อกด
-                                      child: Center(
-                                        child: const Icon(
-                                          Icons.add_photo_alternate_outlined,
-                                          color: Color(0xFF412160),
-                                          size: 80, // ปรับขนาดไอคอน
+                                          width: 1,
                                         ),
                                       ),
-                                      onTap: () {
-                                        // โค้ดสำหรับเลือกรูปภาพ
-                                      },
+                                      child: InkWell(
+                                        splashColor:
+                                            Colors.purple.withOpacity(0.5),
+                                        highlightColor:
+                                            Colors.purple.withOpacity(0.5),
+                                        child: Center(
+                                          child: _imageFile ==
+                                                  null // ตรวจสอบว่ามีรูปภาพหรือไม่
+                                              ? Icon(
+                                                  Icons
+                                                      .add_photo_alternate_outlined,
+                                                  color: Color(0xFF412160),
+                                                  size: 80,
+                                                )
+                                              : ClipOval(
+                                                  // แสดงรูปภาพในรูปทรงวงกลม
+                                                  child: Image.file(
+                                                    _imageFile!,
+                                                    fit: BoxFit.cover,
+                                                    width: 120,
+                                                    height: 120,
+                                                  ),
+                                                ),
+                                        ),
+                                        onTap: () {
+                                          _showImageSourceActionSheet(context);
+                                        },
+                                      ),
                                     ),
                                   ),
 
@@ -333,6 +408,37 @@ class _AddProductPageState extends State<AddProductPage> {
             ),
         ],
       ),
+    );
+  }
+
+  void _showImageSourceActionSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              ListTile(
+                leading: Icon(Icons.camera_alt),
+                title: Text('ถ่ายรูป'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.photo),
+                title: Text('เลือกจากแกลเลอรี่'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage(ImageSource.gallery);
+                },
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 

@@ -1,7 +1,9 @@
 import 'dart:developer';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:quickrider/co/DataUser.dart';
 import 'package:quickrider/page/ChangePage/NavigationBarUser.dart';
 import 'package:quickrider/page/PageUser/AddProduct.dart';
 import 'package:quickrider/page/PageUser/SharedWidget.dart';
@@ -16,11 +18,22 @@ class HomeUserpage extends StatefulWidget {
 class _HomeUserpageState extends State<HomeUserpage>
     with TickerProviderStateMixin {
   int _selectedIndex = 0;
-
+  late User user;
+  String name = '';
+  String url = '';
+  final FirebaseFirestore db = FirebaseFirestore.instance;
+  late Future<void> loadDate;
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    loadDate = loadDataAstnc();
   }
 
   @override
@@ -56,9 +69,33 @@ class _HomeUserpageState extends State<HomeUserpage>
         children: [
           Align(
             alignment: Alignment.topCenter,
-            child: cycletop(
-                'จูเนียร์', //ใช้cycletop ที่มาจากSharedWidgetเพื่อใช้ร่วมกันกับทุกหน้า เพื่อไม่ต้องเเก้ไขหลายจุด เติ้ลเองที่comment
-                'https://pbs.twimg.com/profile_images/1679205589803495428/W-FssaOO_200x200.jpg'),
+            child: FutureBuilder(
+              future: loadDate, // ใช้ future ที่สร้างขึ้นจาก loadDataAstnc
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: CircularProgressIndicator(),
+                  );
+                }
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
+                if (snapshot.connectionState == ConnectionState.done) {
+                  if (user != null) {
+                    return cycletop(
+                      user.fullname, // แทนที่ 'จูเนียร์' ด้วยชื่อผู้ใช้
+                      user.img, // แทนที่ URL รูปภาพด้วย URL ที่ได้จาก user
+                    );
+                  }
+                  return Center(
+                      child:
+                          Text('No user data found')); // กรณีไม่มีข้อมูลผู้ใช้
+                }
+                return const Center(
+                    child:
+                        Text('No data available')); // กรณีที่ไม่เข้าเงื่อนไขใดๆ
+              },
+            ),
           ),
           Align(
             alignment: Alignment.center,
@@ -205,5 +242,28 @@ class _HomeUserpageState extends State<HomeUserpage>
         const SizedBox(height: 10),
       ],
     );
+  }
+
+  Future<void> loadDataAstnc() async {
+    try {
+      // เข้าถึงเอกสารโดยใช้ Document ID
+      DocumentSnapshot docSnapshot =
+          await db.collection('Users').doc('3cKAN61lg3nnq8uxjv56').get();
+
+      if (docSnapshot.exists) {
+        log('Document ID: ${docSnapshot.id}'); // แสดง ID ของเอกสาร
+
+        // เก็บข้อมูลใน User object
+        user = User.fromMap(docSnapshot.data() as Map<String, dynamic>);
+        log('Data: ${user}'); // แสดงข้อมูลทั้งหมด
+
+        // อัปเดต UI เมื่อโหลดข้อมูลเสร็จ
+        setState(() {}); // เรียกใช้ setState เพื่อให้ UI อัปเดต
+      } else {
+        log('No user found with docId: ${docSnapshot.id}');
+      }
+    } catch (e) {
+      log('Error fetching user: $e');
+    }
   }
 }
