@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:quickrider/page/ChangePage/NavigationBarUser.dart';
 import 'package:quickrider/page/PageUser/AddProduct.dart';
 import 'package:quickrider/page/PageUser/SharedWidget.dart';
+import 'package:quickrider/page/PageUser/UserService.dart';
 
 class HomeUserpage extends StatefulWidget {
   const HomeUserpage({super.key});
@@ -19,23 +20,19 @@ class _HomeUserpageState extends State<HomeUserpage>
     with TickerProviderStateMixin {
   late Map<String, dynamic>? user;
   int _selectedIndex = 0;
-  String name = '';
-  String url = '';
-  final box = GetStorage();
-  final FirebaseFirestore db = FirebaseFirestore.instance;
-  late Future<void> loadDate;
+  final userService = Get.find<UserService>();
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
   }
 
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-    loadDate = loadDataAstnc();
-  }
+  // @override
+  // void initState() {
+  //   // TODO: implement initState
+  //   super.initState();
+  //   loadDate = loadDataAstnc();
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -70,27 +67,9 @@ class _HomeUserpageState extends State<HomeUserpage>
         children: [
           Align(
             alignment: Alignment.topCenter,
-            child: FutureBuilder<void>(
-              future: loadDate,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
-                }
-                if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                }
-                if (snapshot.connectionState == ConnectionState.done) {
-                  if (user != null) {
-                    return cycletop(
-                      user!['fullname'] ?? 'ไม่มีชื่อ', // ใช้ชื่อจาก Map
-                      user!['img'] ?? '', // ใช้ URL รูปจาก Map
-                    );
-                  }
-                }
-                return Center(child: Text('No data found'));
-              },
+            child: cycletop(
+              userService.name, // ใช้ข้อมูลชื่อจาก UserService
+              userService.url, // ใช้ข้อมูล URL จาก UserService
             ),
           ),
           Align(
@@ -240,26 +219,26 @@ class _HomeUserpageState extends State<HomeUserpage>
     );
   }
 
-  Future<void> loadDataAstnc() async {
-    String userid = box.read('Userid');
-    try {
-      // เข้าถึงเอกสารโดยใช้ Document ID
-      var docSnapshot = await db.collection('Users').doc(userid).get();
+  // Future<void> loadDataAstnc() async {
+  //   String userid = box.read('Userid');
+  //   try {
+  //     // เข้าถึงเอกสารโดยใช้ Document ID
+  //     var docSnapshot = await db.collection('Users').doc(userid).get();
 
-      if (docSnapshot.exists) {
-        log('Document ID: ${docSnapshot.id}'); // แสดง ID ของเอกสาร
+  //     if (docSnapshot.exists) {
+  //       log('Document ID: ${docSnapshot.id}'); // แสดง ID ของเอกสาร
 
-        // เก็บข้อมูลใน Map
-        user = docSnapshot.data() as Map<String, dynamic>?;
-        log('Data: $user'); // แสดงข้อมูลทั้งหมด
+  //       // เก็บข้อมูลใน Map
+  //       user = docSnapshot.data() as Map<String, dynamic>?;
+  //       log('Data: $user'); // แสดงข้อมูลทั้งหมด
 
-        // อัปเดต UI เมื่อโหลดข้อมูลเสร็จ
-        setState(() {}); // เรียกใช้ setState เพื่อให้ UI อัปเดต
-      } else {
-        log('No user found with docId: ${docSnapshot.id}');
-      }
-    } catch (e) {
-      log('Error fetching user: $e');
-    }
-  }
+  //       // อัปเดต UI เมื่อโหลดข้อมูลเสร็จ
+  //       setState(() {}); // เรียกใช้ setState เพื่อให้ UI อัปเดต
+  //     } else {
+  //       log('No user found with docId: ${docSnapshot.id}');
+  //     }
+  //   } catch (e) {
+  //     log('Error fetching user: $e');
+  //   }
+  // }
 }

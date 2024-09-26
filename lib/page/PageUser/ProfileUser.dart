@@ -1,10 +1,14 @@
+import 'dart:developer';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:quickrider/page/ChangePage/NavigationBarUser.dart';
 import 'package:quickrider/page/Login.dart';
 import 'package:quickrider/page/PageUser/SharedWidget.dart';
-import 'package:get_storage/get_storage.dart'; // นำเข้า GetStorage
+import 'package:get_storage/get_storage.dart';
+import 'package:quickrider/page/PageUser/UserService.dart'; // นำเข้า GetStorage
 
 class ProfilePageUser extends StatefulWidget {
   const ProfilePageUser({super.key});
@@ -15,7 +19,7 @@ class ProfilePageUser extends StatefulWidget {
 
 class _ProfilePageUserState extends State<ProfilePageUser> {
   int _selectedIndex = 2;
-
+  final userService = Get.find<UserService>();
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -31,6 +35,13 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
     Get.off(() => const Login()); // เปลี่ยนไปที่หน้า Login
   }
 
+  // @override
+  // void initState() {
+  //   // TODO: implement initState
+  //   super.initState();
+  //   loadDate = loadDataAstnc();
+  // }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -39,8 +50,10 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
         children: [
           Align(
             alignment: Alignment.topCenter,
-            child: cycletop('จูเนียร์',
-                'https://pbs.twimg.com/profile_images/1679205589803495428/W-FssaOO_200x200.jpg'),
+            child: cycletop(
+              userService.name, // ใช้ข้อมูลชื่อจาก UserService
+              userService.url, // ใช้ข้อมูล URL จาก UserService
+            ),
           ),
           Align(
             alignment: Alignment.center,
