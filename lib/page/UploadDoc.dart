@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:quickrider/config/shared/appData.dart';
@@ -30,6 +31,7 @@ class _UploadDocumentsPageState extends State<UploadDocumentsPage> {
   String registration = '';
   String type = '';
   bool isUploading = false; // ตัวแปรสำหรับการตรวจสอบสถานะการอัปโหลด
+  final box = GetStorage();
   double? latitude; // เก็บ latitude เป็น double?
   double? longitude; // เก็บ longitude เป็น double?
   final ImagePicker picker = ImagePicker();
@@ -277,12 +279,19 @@ class _UploadDocumentsPageState extends State<UploadDocumentsPage> {
               'registration': registration,
             });
           }
-          await FirebaseFirestore.instance.collection('Users').add(userData);
+          DocumentReference docRef = await FirebaseFirestore.instance
+              .collection('Users')
+              .add(userData);
+          String docId = docRef.id; // ดึง docID จาก DocumentReference
           if (type == 'user') {
+            box.write('isLoggedIn', true);
+            box.write('Userid', docId);
             Get.to(() => const HomeUserpage(),
                 transition: Transition.cupertino, // Specify the transition here
                 duration: Duration(milliseconds: 300));
           } else {
+            box.write('isLoggedIn', true);
+            box.write('Riderid', docId);
             Get.to(() => const HomeRiderPage(),
                 transition: Transition.cupertino, // Specify the transition here
                 duration: Duration(milliseconds: 300));

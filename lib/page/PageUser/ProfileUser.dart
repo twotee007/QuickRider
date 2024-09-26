@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:quickrider/page/ChangePage/NavigationBarUser.dart';
+import 'package:quickrider/page/Login.dart';
 import 'package:quickrider/page/PageUser/SharedWidget.dart';
+import 'package:get_storage/get_storage.dart'; // นำเข้า GetStorage
 
 class ProfilePageUser extends StatefulWidget {
   const ProfilePageUser({super.key});
@@ -19,6 +22,15 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
     });
   }
 
+  void _logout() {
+    final box = GetStorage();
+    box.remove('isLoggedIn'); // ลบสถานะการล็อกอิน
+    box.remove('Userid'); // ลบ User ID หากมี
+    box.remove('Riderid'); // ลบ Rider ID หากมี
+    // คุณสามารถเพิ่มการนำทางไปยังหน้า Login หรือหน้าหลักได้ที่นี่
+    Get.off(() => const Login()); // เปลี่ยนไปที่หน้า Login
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -27,8 +39,7 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
         children: [
           Align(
             alignment: Alignment.topCenter,
-            child: cycletop(
-                'จูเนียร์', //ใช้cycletop ที่มาจากSharedWidgetเพื่อใช้ร่วมกันกับทุกหน้า เพื่อไม่ต้องเเก้ไขหลายจุด เติ้ลเองที่comment
+            child: cycletop('จูเนียร์',
                 'https://pbs.twimg.com/profile_images/1679205589803495428/W-FssaOO_200x200.jpg'),
           ),
           Align(
@@ -46,6 +57,30 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
                           topLeft: Radius.circular(25),
                           topRight: Radius.circular(25),
                         ),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // ปุ่มล็อกเอาต์
+                          ElevatedButton(
+                            onPressed: _logout,
+                            style: ElevatedButton.styleFrom(
+                              iconColor: Colors.red, // เปลี่ยนสีปุ่ม
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 40, vertical: 15),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                            ),
+                            child: Text(
+                              'ล็อกเอาต์',
+                              style: GoogleFonts.poppins(
+                                color: Colors.white,
+                                fontSize: 18,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),

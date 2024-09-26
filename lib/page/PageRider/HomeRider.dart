@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class HomeRiderPage extends StatefulWidget {
@@ -11,6 +12,16 @@ class HomeRiderPage extends StatefulWidget {
 }
 
 class _HomeRiderPageState extends State<HomeRiderPage> {
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    // final box = GetStorage();
+    // box.remove('isLoggedIn'); // ลบสถานะการล็อกอิน
+    // box.remove('Userid'); // ลบ User ID หากมี
+    // box.remove('Riderid'); // ลบ Rider ID หากมี
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

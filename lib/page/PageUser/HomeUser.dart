@@ -2,6 +2,7 @@ import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:quickrider/page/ChangePage/NavigationBarUser.dart';
 import 'package:quickrider/page/PageUser/AddProduct.dart';
@@ -20,6 +21,7 @@ class _HomeUserpageState extends State<HomeUserpage>
   int _selectedIndex = 0;
   String name = '';
   String url = '';
+  final box = GetStorage();
   final FirebaseFirestore db = FirebaseFirestore.instance;
   late Future<void> loadDate;
   void _onItemTapped(int index) {
@@ -239,10 +241,10 @@ class _HomeUserpageState extends State<HomeUserpage>
   }
 
   Future<void> loadDataAstnc() async {
+    String userid = box.read('Userid');
     try {
       // เข้าถึงเอกสารโดยใช้ Document ID
-      var docSnapshot =
-          await db.collection('Users').doc('3cKAN61lg3nnq8uxjv56').get();
+      var docSnapshot = await db.collection('Users').doc(userid).get();
 
       if (docSnapshot.exists) {
         log('Document ID: ${docSnapshot.id}'); // แสดง ID ของเอกสาร

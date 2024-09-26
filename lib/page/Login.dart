@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:quickrider/page/PageRider/HomeRider.dart';
 import 'package:quickrider/page/PageUser/HomeUser.dart';
 import 'package:quickrider/page/signup.dart';
@@ -18,6 +19,7 @@ class _LoginState extends State<Login> {
   final TextEditingController _passwordController = TextEditingController();
   String text = '';
   bool _isPasswordVisible = false; // To track password visibility
+  final box = GetStorage();
 
   @override
   Widget build(BuildContext context) {
@@ -207,11 +209,16 @@ class _LoginState extends State<Login> {
           snapshot.docs.first['password']; // ดึงรหัสผ่านจากฐานข้อมูล
       String userType =
           snapshot.docs.first['type']; // ดึงประเภทผู้ใช้จากฐานข้อมูล
+      String docId = snapshot.docs.first.id; // ดึง docID ของผู้ใช้ที่ล็อกอิน
       if (storedPassword == _passwordController.text) {
         log('เข้าสู่ระบบสำเร็จ');
         if (userType == 'user') {
+          box.write('isLoggedIn', true);
+          box.write('Userid', docId);
           Get.to(() => const HomeUserpage());
         } else {
+          box.write('isLoggedIn', true);
+          box.write('Riderid', docId);
           Get.to(() => const HomeRiderPage());
         }
       } else {
