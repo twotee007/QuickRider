@@ -1,7 +1,11 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:quickrider/page/ChangePage/NavigationBarRider.dart';
+import 'package:quickrider/page/PageRider/RiderService.dart';
+import 'package:quickrider/page/PageRider/widgetRider.dart';
 
 class HistoryPageRider extends StatefulWidget {
   const HistoryPageRider({super.key});
@@ -10,7 +14,17 @@ class HistoryPageRider extends StatefulWidget {
   State<HistoryPageRider> createState() => _HistoryPageRiderState();
 }
 
-class _HistoryPageRiderState extends State<HistoryPageRider> {
+class _HistoryPageRiderState extends State<HistoryPageRider>
+    with TickerProviderStateMixin {
+  late Map<String, dynamic>? user;
+  int _selectedIndex = 1;
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  final riderService = Get.find<RiderService>();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -19,18 +33,19 @@ class _HistoryPageRiderState extends State<HistoryPageRider> {
         children: [
           Align(
             alignment: Alignment.topCenter,
-            child: _cycletop('จูเนียร์',
-                'https://pbs.twimg.com/profile_images/1679205589803495428/W-FssaOO_200x200.jpg'),
+            child: cycletopri(
+              riderService.name, // ใช้ข้อมูลชื่อจาก UserService
+              riderService.url, // ใช้ข้อมูล URL จาก UserService
+            ),
           ),
           Align(
             alignment: Alignment.center,
             child: Padding(
-              padding: const EdgeInsets.only(top: 150),
+              padding: const EdgeInsets.only(top: 140),
               child: Container(
-                width: 400,
-                height: 650,
+                width: MediaQuery.of(context).size.width * 1,
                 decoration: const BoxDecoration(
-                  color: Colors.white,
+                  color: Color.fromARGB(255, 255, 255, 255),
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(25),
                     topRight: Radius.circular(25),
@@ -87,6 +102,10 @@ class _HistoryPageRiderState extends State<HistoryPageRider> {
             ),
           ),
         ],
+      ),
+      bottomNavigationBar: CustomBottomNavigationBarRider(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
       ),
     );
   }

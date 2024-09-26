@@ -1,8 +1,12 @@
 import 'dart:developer';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:quickrider/page/PageRider/RiderService.dart';
+import 'package:quickrider/page/PageRider/widgetRider.dart';
+import 'package:quickrider/page/ChangePage/NavigationBarRider.dart';
 
 class HomeRiderPage extends StatefulWidget {
   const HomeRiderPage({super.key});
@@ -11,7 +15,17 @@ class HomeRiderPage extends StatefulWidget {
   State<HomeRiderPage> createState() => _HomeRiderPageState();
 }
 
-class _HomeRiderPageState extends State<HomeRiderPage> {
+class _HomeRiderPageState extends State<HomeRiderPage>
+    with TickerProviderStateMixin {
+  late Map<String, dynamic>? rider;
+  int _selectedIndex = 0;
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  final riderService = Get.find<RiderService>();
   @override
   void initState() {
     // TODO: implement initState
@@ -30,18 +44,19 @@ class _HomeRiderPageState extends State<HomeRiderPage> {
         children: [
           Align(
             alignment: Alignment.topCenter,
-            child: _cycletop('จูเนียร์',
-                'https://pbs.twimg.com/profile_images/1679205589803495428/W-FssaOO_200x200.jpg'),
+            child: cycletopri(
+              riderService.name, // ใช้ข้อมูลชื่อจาก UserService
+              riderService.url, // ใช้ข้อมูล URL จาก UserService
+            ),
           ),
           Align(
             alignment: Alignment.center,
             child: Padding(
-              padding: const EdgeInsets.only(top: 150),
+              padding: const EdgeInsets.only(top: 140),
               child: Container(
-                width: 400,
-                height: 650,
+                width: MediaQuery.of(context).size.width * 1,
                 decoration: const BoxDecoration(
-                  color: Colors.white,
+                  color: Color.fromARGB(255, 255, 255, 255),
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(25),
                     topRight: Radius.circular(25),
@@ -98,6 +113,10 @@ class _HomeRiderPageState extends State<HomeRiderPage> {
             ),
           ),
         ],
+      ),
+      bottomNavigationBar: CustomBottomNavigationBarRider(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
       ),
     );
   }
@@ -190,97 +209,6 @@ class _HomeRiderPageState extends State<HomeRiderPage> {
         ),
         const SizedBox(height: 10), // Properly placed inside the Column
       ],
-    );
-  }
-
-  Widget _cycletop(String name, String url) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 35), // กำหนดระยะห่างจากด้านบน
-      child: Container(
-        width: 360, // กำหนดความกว้าง
-        height: 80, // กำหนดความสูง
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text.rich(
-                    TextSpan(
-                      children: [
-                        TextSpan(
-                          text: 'Rider ',
-                          style: GoogleFonts.roboto(
-                            textStyle: const TextStyle(
-                              fontSize: 20,
-                              color: Colors.black,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'คุณ$name',
-                          style: GoogleFonts.roboto(
-                            textStyle: const TextStyle(
-                              fontSize: 20,
-                              color: Colors.black,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Row(
-                    children: [
-                      Text(
-                        'ออนไลน์',
-                        style: GoogleFonts.roboto(
-                          textStyle: const TextStyle(
-                            fontSize: 14,
-                            color: Colors.green,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 7),
-                      Image.asset(
-                        'assets/img/motorcycle.png',
-                        width: 19,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: ClipOval(
-                child: Image.network(
-                  url,
-                  width: 60,
-                  height: 60,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      width: 50,
-                      height: 50,
-                      color: Colors.grey,
-                      child:
-                          const Center(child: Text('ไม่สามารถโหลดรูปภาพได้')),
-                    );
-                  },
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

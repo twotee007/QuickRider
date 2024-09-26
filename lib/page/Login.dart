@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:quickrider/page/PageRider/HomeRider.dart';
+import 'package:quickrider/page/PageRider/RiderService.dart';
 import 'package:quickrider/page/PageUser/HomeUser.dart';
 import 'package:quickrider/page/PageUser/UserService.dart';
 import 'package:quickrider/page/signup.dart';
@@ -222,6 +223,8 @@ class _LoginState extends State<Login> {
         } else {
           box.write('isLoggedIn', true);
           box.write('Riderid', docId);
+          final riderService = Get.put(RiderService());
+          riderService.loadUserData();
           Get.to(() => const HomeRiderPage());
         }
       } else {

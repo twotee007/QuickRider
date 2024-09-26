@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 import 'package:quickrider/config/shared/appData.dart';
 import 'package:quickrider/firebase_options.dart';
 import 'package:quickrider/page/Login.dart';
+import 'package:quickrider/page/PageRider/RiderService.dart';
 import 'package:quickrider/page/PageUser/UserService.dart';
 import 'package:quickrider/page/screenpage.dart';
 
@@ -38,6 +39,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final userService = Get.put(UserService());
     userService.loadUserData();
+    final riderService = Get.put(RiderService());
+    riderService.loadUserData();
     return GetMaterialApp(
       title: 'Flutter Demo',
       home: ScreenPage(),
