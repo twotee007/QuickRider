@@ -11,6 +11,7 @@ import 'package:provider/provider.dart';
 import 'package:quickrider/config/shared/appData.dart';
 import 'package:quickrider/page/PageRider/HomeRider.dart';
 import 'package:quickrider/page/PageUser/HomeUser.dart';
+import 'package:quickrider/page/PageUser/UserService.dart';
 import 'package:quickrider/page/login.dart';
 import 'package:uuid/uuid.dart';
 
@@ -248,6 +249,7 @@ class _UploadDocumentsPageState extends State<UploadDocumentsPage> {
   }
 
   Future<void> uploadusersToFirebase() async {
+    final userService = Get.find<UserService>();
     if (imageFile != null) {
       setState(() {
         isUploading = true; // เริ่มการอัปโหลด
@@ -284,12 +286,20 @@ class _UploadDocumentsPageState extends State<UploadDocumentsPage> {
               .add(userData);
           String docId = docRef.id; // ดึง docID จาก DocumentReference
           if (type == 'user') {
+            userService.updateUserData(
+              fullname: fullname,
+              imgUrl: downloadURL, // อัปเดตด้วย URL ของภาพ
+            );
             box.write('isLoggedIn', true);
             box.write('Userid', docId);
             Get.to(() => const HomeUserpage(),
                 transition: Transition.cupertino, // Specify the transition here
                 duration: const Duration(milliseconds: 300));
           } else {
+            userService.updateUserData(
+              fullname: fullname,
+              imgUrl: downloadURL, // อัปเดตด้วย URL ของภาพ
+            );
             box.write('isLoggedIn', true);
             box.write('Riderid', docId);
             Get.to(() => const HomeRiderPage(),
