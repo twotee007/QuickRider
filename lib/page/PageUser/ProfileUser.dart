@@ -143,31 +143,56 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
                       child: SingleChildScrollView(
                         child: Column(
                           children: [
-                            GestureDetector(
-                              onTap: () {
-                                _showImageSourceActionSheet(context, setState);
-                              },
-                              child: CircleAvatar(
-                                radius: 50,
-                                backgroundColor: Colors.grey[200],
-                                child: imageFile != null
-                                    ? ClipOval(
-                                        child: Image.file(
-                                          imageFile!,
-                                          fit: BoxFit.cover,
-                                          width: 100,
-                                          height: 100,
+                            // ปรับ Row เพื่อจัดตำแหน่งรูปภาพและปุ่มให้อยู่ด้านขวาของรูป
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                // รูปภาพโปรไฟล์
+                                CircleAvatar(
+                                  radius: 50,
+                                  backgroundColor: Colors.grey[200],
+                                  child: imageFile != null
+                                      ? ClipOval(
+                                          child: Image.file(
+                                            imageFile!,
+                                            fit: BoxFit.cover,
+                                            width: 100,
+                                            height: 100,
+                                          ),
+                                        )
+                                      : ClipOval(
+                                          child: Image.network(
+                                            url,
+                                            fit: BoxFit.cover,
+                                            width: 100,
+                                            height: 100,
+                                          ),
                                         ),
-                                      )
-                                    : ClipOval(
-                                        child: Image.network(
-                                          url,
-                                          fit: BoxFit.cover,
-                                          width: 100,
-                                          height: 100,
-                                        ),
-                                      ),
-                              ),
+                                ),
+                                const SizedBox(width: 20),
+                                // ปุ่มแก้ไขรูปภาพทางด้านขวาของรูป
+                                ElevatedButton(
+                                  onPressed: () {
+                                    _showImageSourceActionSheet(
+                                        context, setState);
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.green,
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 20, vertical: 10),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(30),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'แก้ไขรูปภาพ',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 15),
                             _buildTextFieldEdit(
@@ -189,6 +214,9 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
                               togglePasswordVisibility: () {
                                 setState(() {
                                   isPasswordVisible = !isPasswordVisible;
+                                  passwordController.text = isPasswordVisible
+                                      ? password
+                                      : _maskPassword(password);
                                 });
                               },
                             ),
@@ -487,6 +515,41 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
     String userid = box.read('Userid');
     String currentImageUrl =
         url; // Assuming userService.url has the current image URL
+
+    // แสดงสปินเนอร์เมื่อกดปุ่มยืนยัน
+    showDialog(
+      context: context,
+      barrierDismissible: false, // ไม่ให้ปิดได้เมื่อกดด้านนอก
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10), // ขอบโค้งมน
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20), // ระยะห่างรอบข้อความและสปินเนอร์
+            child: Column(
+              mainAxisSize: MainAxisSize.min, // ปรับขนาดให้พอดีกับเนื้อหา
+              children: [
+                const CircularProgressIndicator(), // สปินเนอร์
+                const SizedBox(
+                    height: 20), // ช่องว่างระหว่างสปินเนอร์กับข้อความ
+                const Text("กำลังอัปโหลด..."), // ข้อความที่จะแสดง
+              ],
+            ),
+          ),
+        );
+      },
+    );
+    //    showDialog(
+    //   context: context,
+    //   barrierDismissible: false,
+    //   builder: (BuildContext context) {
+    //     return const Center(
+    //       child: CircularProgressIndicator(),
+    //     );
+    //   },
+    // );
+
     if (imageFile != null) {
       setState(() {
         isUploading = true; // เริ่มการอัปโหลด
@@ -525,13 +588,13 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
       } finally {
         userService.updateUserData(
           fullname: nameController.text,
-
           imgUrl: dowurl, // อัปเดตด้วย URL ของภาพ
         );
-        Get.back();
         setState(() {
           isUploading = false; // อัปโหลดเสร็จแล้ว
         });
+        Navigator.of(context).pop(); // ปิดสปินเนอร์เมื่อเสร็จสิ้น
+        Get.back(); // ปิดป็อปอัพแก้ไขโปรไฟล์
       }
     } else {
       setState(() {
@@ -550,10 +613,11 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
         fullname: nameController.text,
         imgUrl: dowurl, // อัปเดตด้วย URL ของภาพ
       );
-      Get.back();
       setState(() {
-        isUploading = false; // เริ่มการอัปโหลด
+        isUploading = false; // เสร็จสิ้นการอัปโหลด
       });
+      Navigator.of(context).pop(); // ปิดสปินเนอร์เมื่อเสร็จสิ้น
+      Get.back(); // ปิดป็อปอัพแก้ไขโปรไฟล์
     }
   }
 
