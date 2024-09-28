@@ -2,8 +2,10 @@ import 'dart:developer';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import 'package:quickrider/config/shared/appData.dart';
 import 'package:quickrider/main.dart';
@@ -29,12 +31,19 @@ class _UserSignupState extends State<UserSignup> {
   TextEditingController estateCtl = TextEditingController();
   TextEditingController dateCtl = TextEditingController();
   final FirebaseFirestore db = FirebaseFirestore.instance;
+  late LatLng latLng;
+  MapController mapController = MapController();
+  double? latitude;
+  double? longitude;
   String text = '';
   bool _isLoading = false; // ตัวแปรสำหรับควบคุมสถานะการโหลด
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+    latitude = context.read<AppData>().latitude;
+    longitude = context.read<AppData>().longitude;
+    latLng = LatLng(latitude ?? 13.7524938, longitude ?? 100.4935089);
   }
 
   @override
@@ -158,6 +167,14 @@ class _UserSignupState extends State<UserSignup> {
                           },
                         ),
                         _buildTextField(Icons.home, 'Estate & City', estateCtl),
+                        IconButton(
+                          icon: const Icon(
+                              Icons.search), // You can use any icon here
+                          onPressed: () {
+                            _showMapPopup(context);
+                            log('Search button pressed for Estate & City');
+                          },
+                        ),
                         Center(child: Text(text)),
                         const SizedBox(height: 10),
                         ElevatedButton(
@@ -225,6 +242,118 @@ class _UserSignupState extends State<UserSignup> {
     );
   }
 
+  void _showMapPopup(BuildContext context) {
+    LatLng initialLatLng = latLng; // บันทึก latLng ปัจจุบัน
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: StatefulBuilder(
+            // ใช้ StatefulBuilder เพื่ออัปเดตสถานะใน dialog
+            builder: (BuildContext context, StateSetter setState) {
+              return Container(
+                padding: const EdgeInsets.all(20),
+                height: 500,
+                width: 400,
+                child: Column(
+                  children: [
+                    const Text(
+                      'Select Location',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                    FilledButton(
+                      onPressed: () async {
+                        Position position = await _determinePosition();
+                        log('Current position: ${position.latitude} ${position.longitude}');
+                        initialLatLng =
+                            LatLng(position.latitude, position.longitude);
+                        setState(() {}); // อัปเดต latLng ใน dialog
+                        mapController.move(
+                            initialLatLng, mapController.camera.zoom);
+                      },
+                      child: const Text('Get Location'),
+                    ),
+                    Expanded(
+                      child: FlutterMap(
+                        mapController: mapController,
+                        options: MapOptions(
+                          initialCenter: initialLatLng,
+                          initialZoom: 15.0,
+                          onTap: (tapPosition, tappedLatLng) {
+                            setState(() {
+                              initialLatLng =
+                                  tappedLatLng; // อัปเดตตำแหน่งมาร์กเกอร์
+                            });
+                            log('Marker placed at: ${initialLatLng.latitude}, ${initialLatLng.longitude}');
+
+                            mapController.move(
+                                initialLatLng, mapController.camera.zoom);
+                          },
+                        ),
+                        children: [
+                          TileLayer(
+                            urlTemplate:
+                                'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                            userAgentPackageName: 'com.example.app',
+                            maxNativeZoom: 19,
+                          ),
+                          MarkerLayer(
+                            markers: [
+                              Marker(
+                                point: initialLatLng,
+                                width: 40,
+                                height: 40,
+                                child: const Icon(
+                                  Icons.location_pin,
+                                  color: Colors.red,
+                                  size: 40,
+                                ),
+                                alignment: Alignment.center,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    ElevatedButton(
+                      onPressed: () {
+                        context.read<AppData>().latitude =
+                            initialLatLng.latitude;
+                        context.read<AppData>().longitude =
+                            initialLatLng.longitude;
+                        Navigator.of(context).pop(); // ปิดหน้าต่างป๊อปอัพ
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF412160),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 30, vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
+                      child: const Text(
+                        'ยืนยัน',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildTextField(
       IconData icon, String hintText, TextEditingController controller,
       {bool isPassword = false}) {
@@ -287,12 +416,8 @@ class _UserSignupState extends State<UserSignup> {
     bool serviceEnabled;
     LocationPermission permission;
 
-    // Test if location services are enabled.
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      // Location services are not enabled don't continue
-      // accessing the position and request users of the
-      // App to enable the location services.
       return Future.error('Location services are disabled.');
     }
 
@@ -300,11 +425,6 @@ class _UserSignupState extends State<UserSignup> {
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        // Permissions are denied, next time you could try
-        // requesting permissions again (this is also where
-        // Android's shouldShowRequestPermissionRationale
-        // returned true. According to Android guidelines
-        // your App should show an explanatory UI now.
         return Future.error('Location permissions are denied');
       }
     }
@@ -315,8 +435,6 @@ class _UserSignupState extends State<UserSignup> {
           'Location permissions are permanently denied, we cannot request permissions.');
     }
 
-    // When we reach here, permissions are granted and we can
-    // continue accessing the position of the device.
     return await Geolocator.getCurrentPosition();
   }
 
@@ -427,7 +545,6 @@ class _UserSignupState extends State<UserSignup> {
         });
         return;
       }
-      Position position = await _determinePosition();
       // เก็บข้อมูลลงใน AppData
       context.read<AppData>().fullname = fullnameCtl.text.trim();
       context.read<AppData>().email = emailCtl.text.trim();
@@ -436,8 +553,7 @@ class _UserSignupState extends State<UserSignup> {
       context.read<AppData>().date = dateCtl.text.trim();
       context.read<AppData>().estate = estateCtl.text.trim();
       context.read<AppData>().type = 'user';
-      context.read<AppData>().latitude = position.latitude;
-      context.read<AppData>().longitude = position.longitude;
+
       // นำไปสู่หน้าถัดไป
       Get.to(
         () => const UploadDocumentsPage(),
