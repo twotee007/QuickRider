@@ -110,7 +110,7 @@ class _UserSignupState extends State<UserSignup> {
                             color: Color(0xFF412160),
                           ),
                         ),
-                        const SizedBox(height: 13),
+                        const SizedBox(height: 10),
                         _buildTextField(Icons.person, 'FullName', fullnameCtl),
                         _buildTextField(Icons.email, 'Email Id', emailCtl),
                         _buildPasswordField(
@@ -139,6 +139,7 @@ class _UserSignupState extends State<UserSignup> {
                           controller: comPasswordCtl,
                         ),
                         _buildTextField(Icons.phone, 'Mobile Number', phoneCtl),
+                        const SizedBox(height: 10),
                         TextField(
                           controller: dateCtl,
                           readOnly: true,
@@ -166,15 +167,39 @@ class _UserSignupState extends State<UserSignup> {
                             }
                           },
                         ),
+                        const SizedBox(height: 10),
                         _buildTextField(Icons.home, 'Estate & City', estateCtl),
-                        IconButton(
-                          icon: const Icon(
-                              Icons.search), // You can use any icon here
-                          onPressed: () {
-                            _showMapPopup(context);
-                            log('Search button pressed for Estate & City');
-                          },
+                        const SizedBox(
+                            height: 10), // Add some spacing between the fields
+                        Center(
+                          child: SizedBox(
+                            width: 250, // Set the desired width here
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                _showMapPopup(
+                                    context); // Call the function to show the map or handle location
+                                log('My Location button pressed');
+                              },
+                              icon: const Icon(
+                                  Icons.my_location), // Location Icon
+                              label: const Text(
+                                'Use Current Location',
+                                style: TextStyle(
+                                    color: Colors.white), // White text
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(
+                                    0xFF412160), // Button background color
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 15),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
+
                         Center(child: Text(text)),
                         const SizedBox(height: 10),
                         ElevatedButton(
@@ -254,98 +279,126 @@ class _UserSignupState extends State<UserSignup> {
           child: StatefulBuilder(
             // ใช้ StatefulBuilder เพื่ออัปเดตสถานะใน dialog
             builder: (BuildContext context, StateSetter setState) {
-              return Container(
-                padding: const EdgeInsets.all(20),
-                height: 500,
-                width: 400,
-                child: Column(
-                  children: [
-                    const Text(
-                      'Select Location',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 15),
-                    FilledButton(
-                      onPressed: () async {
-                        Position position = await _determinePosition();
-                        log('Current position: ${position.latitude} ${position.longitude}');
-                        initialLatLng =
-                            LatLng(position.latitude, position.longitude);
-                        setState(() {}); // อัปเดต latLng ใน dialog
-                        mapController.move(
-                            initialLatLng, mapController.camera.zoom);
-                      },
-                      child: const Text('Get Location'),
-                    ),
-                    Expanded(
-                      child: FlutterMap(
-                        mapController: mapController,
-                        options: MapOptions(
-                          initialCenter: initialLatLng,
-                          initialZoom: 15.0,
-                          onTap: (tapPosition, tappedLatLng) {
-                            setState(() {
-                              initialLatLng =
-                                  tappedLatLng; // อัปเดตตำแหน่งมาร์กเกอร์
-                            });
-                            log('Marker placed at: ${initialLatLng.latitude}, ${initialLatLng.longitude}');
-
-                            mapController.move(
-                                initialLatLng, mapController.camera.zoom);
-                          },
-                        ),
-                        children: [
-                          TileLayer(
-                            urlTemplate:
-                                'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                            userAgentPackageName: 'com.example.app',
-                            maxNativeZoom: 19,
+              return Stack(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    height: 500,
+                    width: 400,
+                    child: Column(
+                      children: [
+                        const Text(
+                          'Select Location',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
                           ),
-                          MarkerLayer(
-                            markers: [
-                              Marker(
-                                point: initialLatLng,
-                                width: 40,
-                                height: 40,
-                                child: const Icon(
-                                  Icons.location_pin,
-                                  color: Colors.red,
-                                  size: 40,
+                        ),
+                        const SizedBox(height: 15),
+                        Expanded(
+                          child: Stack(
+                            children: [
+                              FlutterMap(
+                                mapController: mapController,
+                                options: MapOptions(
+                                  initialCenter: initialLatLng,
+                                  initialZoom: 15.0,
+                                  onTap: (tapPosition, tappedLatLng) {
+                                    setState(() {
+                                      initialLatLng =
+                                          tappedLatLng; // อัปเดตตำแหน่งมาร์กเกอร์
+                                    });
+                                    log('Marker placed at: ${initialLatLng.latitude}, ${initialLatLng.longitude}');
+
+                                    mapController.move(initialLatLng,
+                                        mapController.camera.zoom);
+                                  },
                                 ),
-                                alignment: Alignment.center,
+                                children: [
+                                  TileLayer(
+                                    urlTemplate:
+                                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                    userAgentPackageName: 'com.example.app',
+                                    maxNativeZoom: 19,
+                                  ),
+                                  MarkerLayer(
+                                    markers: [
+                                      Marker(
+                                        point: initialLatLng,
+                                        width: 40,
+                                        height: 40,
+                                        child: const Icon(
+                                          Icons.location_pin,
+                                          color: Colors.red,
+                                          size: 40,
+                                        ),
+                                        alignment: Alignment.center,
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              Positioned(
+                                bottom: 20,
+                                right: 20,
+                                child: FloatingActionButton(
+                                  backgroundColor: Colors.white,
+                                  onPressed: () async {
+                                    Position position =
+                                        await _determinePosition();
+                                    log('Current position: ${position.latitude} ${position.longitude}');
+                                    initialLatLng = LatLng(
+                                        position.latitude, position.longitude);
+                                    setState(() {}); // อัปเดต latLng ใน dialog
+                                    mapController.move(initialLatLng,
+                                        mapController.camera.zoom);
+                                  },
+                                  child: const Icon(
+                                    Icons.my_location,
+                                    color: Colors.red,
+                                    size: 30,
+                                  ),
+                                ),
                               ),
                             ],
                           ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    ElevatedButton(
-                      onPressed: () {
-                        context.read<AppData>().latitude =
-                            initialLatLng.latitude;
-                        context.read<AppData>().longitude =
-                            initialLatLng.longitude;
-                        Navigator.of(context).pop(); // ปิดหน้าต่างป๊อปอัพ
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF412160),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 30, vertical: 15),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
                         ),
-                      ),
-                      child: const Text(
-                        'ยืนยัน',
-                        style: TextStyle(color: Colors.white),
-                      ),
+                        const SizedBox(height: 10),
+                        ElevatedButton(
+                          onPressed: () {
+                            context.read<AppData>().latitude =
+                                initialLatLng.latitude;
+                            context.read<AppData>().longitude =
+                                initialLatLng.longitude;
+                            Navigator.of(context).pop(); // ปิดหน้าต่างป๊อปอัพ
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF412160),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 30, vertical: 15),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                          ),
+                          child: const Text(
+                            'ยืนยัน',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                  Positioned(
+                    top: 10,
+                    left: 10,
+                    child: IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () {
+                        Navigator.of(context).pop(); // ปิดหน้าต่างเมื่อกดกากบาท
+                      },
+                    ),
+                  ),
+                ],
               );
             },
           ),
