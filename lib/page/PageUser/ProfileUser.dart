@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
@@ -114,6 +115,21 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
   // Function to show edit profile dialog
   void _showEditProfileDialog() {
     bool isPasswordVisible = false; // ใช้สถานะภายใน popup dialog
+    bool isConfirmPasswordVisible = false; // ใช้สถานะภายใน popup dialog
+    String errorMessage = ''; // สำหรับข้อความแสดงข้อผิดพลาด
+
+    // สำรองข้อมูลต้นฉบับก่อนเปิดป๊อปอัพ
+    String originalName = nameController.text;
+    String originalEmail = emailController.text;
+    String originalPhone = phoneController.text;
+    String originalDate = dateController.text;
+    String originalAddress = addressController.text;
+    String originalPassword = passwordController.text;
+    String originalConfirmPassword = compasswordController.text;
+    var originalImageFile = imageFile; // เก็บไฟล์ภาพเดิม
+    String originalImageUrl = url; // เก็บ URL ของภาพเดิ
+    // เคลียร์ช่อง Confirm Password ให้เป็นค่าว่างเมื่อเปิดป๊อปอัพ
+    compasswordController.clear();
 
     showDialog(
       context: context,
@@ -139,7 +155,19 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
                         IconButton(
                           icon: const Icon(Icons.close),
                           onPressed: () {
-                            Navigator.of(context).pop();
+                            // กู้คืนข้อมูลต้นฉบับเมื่อกดปิดโดยไม่ได้ยืนยัน
+                            nameController.text = originalName;
+                            emailController.text = originalEmail;
+                            phoneController.text = originalPhone;
+                            dateController.text = originalDate;
+                            addressController.text = originalAddress;
+                            passwordController.text = originalPassword;
+                            compasswordController.text =
+                                originalConfirmPassword;
+                            // คืนค่าภาพเดิม
+                            imageFile = originalImageFile;
+                            url = originalImageUrl;
+                            Navigator.of(context).pop(); // ปิดป๊อปอัพ
                           },
                         ),
                       ],
@@ -208,7 +236,7 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
                             _buildTextFieldEdit(
                                 label: 'Phone', controller: phoneController),
                             _buildTextFieldEdit(
-                                label: 'Date of birth',
+                                label: 'Date of Birth',
                                 controller: dateController),
                             _buildTextFieldEdit(
                                 label: 'Estate & City',
@@ -220,25 +248,26 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
                               togglePasswordVisibility: () {
                                 setState(() {
                                   isPasswordVisible = !isPasswordVisible;
-                                  passwordController.text = isPasswordVisible
-                                      ? passwordController.text
-                                      : passwordController.text;
                                 });
                               },
                             ),
                             _buildTextFieldEdit(
                               label: "Confirm Password",
                               controller: compasswordController,
-                              isPasswordVisible: isPasswordVisible,
+                              isPasswordVisible: isConfirmPasswordVisible,
                               togglePasswordVisibility: () {
                                 setState(() {
-                                  isPasswordVisible = !isPasswordVisible;
-                                  compasswordController.text = isPasswordVisible
-                                      ? compasswordController.text
-                                      : compasswordController.text;
+                                  isConfirmPasswordVisible =
+                                      !isConfirmPasswordVisible;
                                 });
                               },
                             ),
+                            if (errorMessage.isNotEmpty)
+                              Text(
+                                errorMessage,
+                                style: const TextStyle(
+                                    color: Colors.red, fontSize: 14),
+                              ),
                           ],
                         ),
                       ),
@@ -246,7 +275,34 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
                     const SizedBox(height: 20),
                     ElevatedButton(
                       onPressed: () {
-                        uploadUsersToFirebase();
+                        // ปิดคีย์บอร์ด
+                        FocusScope.of(context).unfocus(); // ปิดคีย์บอร์ด
+                        setState(() {
+                          // ตรวจสอบว่าฟิลด์ทั้งหมดถูกกรอกข้อมูลหรือไม่
+                          if (nameController.text.isEmpty) {
+                            errorMessage = 'กรุณากรอกชื่อเต็ม';
+                          } else if (emailController.text.isEmpty ||
+                              !RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+                                  .hasMatch(emailController.text)) {
+                            errorMessage = 'กรุณากรอกอีเมลให้ถูกต้อง';
+                          } else if (phoneController.text.isEmpty ||
+                              phoneController.text.length != 10) {
+                            errorMessage = 'หมายเลขโทรศัพท์ต้องมี 10 หลัก';
+                          } else if (dateController.text.isEmpty) {
+                            errorMessage = 'กรุณากรอกวันที่เกิด';
+                          } else if (addressController.text.isEmpty) {
+                            errorMessage = 'กรุณากรอกที่อยู่';
+                          } else if (passwordController.text.isEmpty ||
+                              compasswordController.text.isEmpty) {
+                            errorMessage = 'กรุณากรอกรหัสผ่านและยืนยันรหัสผ่าน';
+                          } else if (passwordController.text !=
+                              compasswordController.text) {
+                            errorMessage = 'รหัสผ่านไม่ตรงกัน';
+                          } else {
+                            errorMessage = ''; // ล้างข้อความข้อผิดพลาด
+                            uploadUsersToFirebase(); // อัปโหลดข้อมูลไปยัง Firebase
+                          }
+                        });
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green,
@@ -293,7 +349,19 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
         const SizedBox(height: 5),
         TextField(
           controller: controller,
-          obscureText: label == "Password" ? !isPasswordVisible : false,
+          obscureText: (label == "Password" || label == "Confirm Password")
+              ? !isPasswordVisible
+              : false,
+          keyboardType: (label == "Phone")
+              ? TextInputType.phone
+              : TextInputType
+                  .text, // Set keyboard type to phone for Phone label
+          inputFormatters: (label == "Phone")
+              ? [
+                  LengthLimitingTextInputFormatter(10),
+                  FilteringTextInputFormatter.digitsOnly
+                ]
+              : [],
           decoration: InputDecoration(
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
@@ -316,7 +384,7 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
                 width: 2.0,
               ),
             ),
-            suffixIcon: label == "Password"
+            suffixIcon: (label == "Password" || label == "Confirm Password")
                 ? IconButton(
                     icon: Icon(
                       isPasswordVisible
@@ -329,6 +397,22 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
                 : null,
             isDense: true,
           ),
+          onTap: (label == "Date of Birth") // เมื่อแตะช่องกรอกวันที่เกิด
+              ? () async {
+                  DateTime? pickedDate = await showDatePicker(
+                    context: context,
+                    initialDate: DateTime.now(),
+                    firstDate: DateTime(1900),
+                    lastDate: DateTime.now(),
+                  );
+
+                  if (pickedDate != null) {
+                    String formattedDate =
+                        "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}";
+                    dateController.text = formattedDate;
+                  }
+                }
+              : null, // ไม่ทำอะไรหากไม่ใช่วันที่เกิด
         ),
         const SizedBox(height: 15),
       ],
@@ -557,7 +641,7 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
                 const CircularProgressIndicator(), // สปินเนอร์
                 const SizedBox(
                     height: 20), // ช่องว่างระหว่างสปินเนอร์กับข้อความ
-                const Text("กำลังอัปโหลด..."), // ข้อความที่จะแสดง
+                const Text("กำลังอัปโหลดข้อมูลของท่าน..."), // ข้อความที่จะแสดง
               ],
             ),
           ),
@@ -573,7 +657,59 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
     //     );
     //   },
     // );
+    try {
+      // ดึงข้อมูลปัจจุบันของผู้ใช้
+      DocumentSnapshot currentUserDoc =
+          await db.collection('Users').doc(userid).get();
+      Map<String, dynamic> currentUserData =
+          currentUserDoc.data() as Map<String, dynamic>;
 
+      // ตรวจสอบอีเมล
+      if (emailController.text != currentUserData['email']) {
+        QuerySnapshot emailQuery = await db
+            .collection('Users')
+            .where('email', isEqualTo: emailController.text)
+            .get();
+
+        if (emailQuery.docs.isNotEmpty) {
+          Navigator.of(context).pop(); // ปิดหน้าต่างโหลด
+          Get.snackbar('ข้อผิดพลาด', 'อีเมลนี้ถูกใช้งานแล้ว กรุณาใช้อีเมลอื่น',
+              snackPosition: SnackPosition.BOTTOM,
+              backgroundColor: Colors.red,
+              colorText: Colors.white);
+          return;
+        }
+      }
+
+      // ตรวจสอบเบอร์โทรศัพท์
+      if (phoneController.text != currentUserData['phone']) {
+        QuerySnapshot phoneQuery = await db
+            .collection('Users')
+            .where('phone', isEqualTo: phoneController.text)
+            .get();
+
+        if (phoneQuery.docs.isNotEmpty) {
+          Navigator.of(context).pop(); // ปิดหน้าต่างโหลด
+          Get.snackbar(
+              'ข้อผิดพลาด', 'เบอร์โทรศัพท์นี้ถูกใช้งานแล้ว กรุณาใช้เบอร์อื่น',
+              snackPosition: SnackPosition.BOTTOM,
+              backgroundColor: Colors.red,
+              colorText: Colors.white);
+          return;
+        }
+      }
+
+      // ดำเนินการอัปเดตข้อมูลต่อไป...
+    } catch (e) {
+      log('Error checking for duplicates: $e');
+      Navigator.of(context).pop(); // ปิดหน้าต่างโหลด
+      Get.snackbar(
+          'ข้อผิดพลาด', 'เกิดข้อผิดพลาดในการตรวจสอบข้อมูล กรุณาลองใหม่อีกครั้ง',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white);
+      return;
+    }
     if (imageFile != null) {
       setState(() {
         isUploading = true; // เริ่มการอัปโหลด
@@ -619,6 +755,10 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
         });
         Navigator.of(context).pop(); // ปิดสปินเนอร์เมื่อเสร็จสิ้น
         Get.back(); // ปิดป็อปอัพแก้ไขโปรไฟล์
+        Get.snackbar('สำเร็จ', 'แก้ไขข้อมูลสำเร็จ',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.green,
+            colorText: Colors.white);
       }
     } else {
       setState(() {
@@ -643,6 +783,11 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
       });
       Navigator.of(context).pop(); // ปิดสปินเนอร์เมื่อเสร็จสิ้น
       Get.back(); // ปิดป็อปอัพแก้ไขโปรไฟล์
+      // เพิ่มข้อความแจ้งเตือนเมื่อสำเร็จ
+      Get.snackbar('สำเร็จ', 'แก้ไขข้อมูลสำเร็จ',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green,
+          colorText: Colors.white);
     }
   }
 
