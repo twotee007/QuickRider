@@ -36,6 +36,7 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
   late TextEditingController phoneController;
   late TextEditingController dateController;
   late TextEditingController addressController;
+  late TextEditingController passwordmaskController;
   late TextEditingController passwordController;
   String name = '';
   String email = '';
@@ -54,6 +55,7 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
     dateController = TextEditingController();
     addressController = TextEditingController();
     passwordController = TextEditingController();
+    passwordmaskController = TextEditingController();
     startRealtimeGet();
   }
 
@@ -215,8 +217,8 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
                                 setState(() {
                                   isPasswordVisible = !isPasswordVisible;
                                   passwordController.text = isPasswordVisible
-                                      ? password
-                                      : _maskPassword(password);
+                                      ? passwordController.text
+                                      : passwordController.text;
                                 });
                               },
                             ),
@@ -339,8 +341,10 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
           controller: controller ??
               TextEditingController(
                 text: !isEditable && label == "Password"
-                    ? _maskPassword(password) // Mask password for view only
-                    : password, // Show full password in edit mode
+                    ? _maskPassword(
+                        passwordController.text) // Mask password for view only
+                    : passwordController
+                        .text, // Show full password in edit mode
               ),
           decoration: InputDecoration(
             border: OutlineInputBorder(
@@ -463,7 +467,7 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
                             // Password field displaying masked password
                             _buildTextField(
                               label: "Password",
-                              controller: passwordController,
+                              controller: passwordmaskController,
                               isEditable: false,
                             ),
                             const SizedBox(height: 30),
@@ -638,10 +642,10 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
             phoneController.text = data['phone'].toString();
             dateController.text = data['date'].toString();
             addressController.text = data['address'].toString();
-            passwordController.text = _maskPassword(
+            passwordmaskController.text = _maskPassword(
                 data['password'].toString()); // Mask the password here
             name = data['fullname'].toString();
-            password = data['password'].toString();
+            passwordController.text = data['password'].toString();
             url = data['img'].toString(); // Update the URL if needed
           });
 
