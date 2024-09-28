@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
+import 'package:provider/provider.dart';
+import 'package:quickrider/config/shared/appData.dart';
 import 'package:quickrider/page/ChangePage/NavigationBarUser.dart';
 import 'package:quickrider/page/Login.dart';
 import 'package:quickrider/page/PageUser/HomeUser.dart';
@@ -38,6 +40,7 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
   late TextEditingController addressController;
   late TextEditingController passwordmaskController;
   late TextEditingController passwordController;
+  late TextEditingController compasswordController;
   String name = '';
   String email = '';
   String date = '';
@@ -56,6 +59,7 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
     addressController = TextEditingController();
     passwordController = TextEditingController();
     passwordmaskController = TextEditingController();
+    compasswordController = TextEditingController();
     startRealtimeGet();
   }
 
@@ -219,6 +223,19 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
                                   passwordController.text = isPasswordVisible
                                       ? passwordController.text
                                       : passwordController.text;
+                                });
+                              },
+                            ),
+                            _buildTextFieldEdit(
+                              label: "Confirm Password",
+                              controller: compasswordController,
+                              isPasswordVisible: isPasswordVisible,
+                              togglePasswordVisibility: () {
+                                setState(() {
+                                  isPasswordVisible = !isPasswordVisible;
+                                  compasswordController.text = isPasswordVisible
+                                      ? compasswordController.text
+                                      : compasswordController.text;
                                 });
                               },
                             ),
@@ -506,8 +523,11 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
         currentIndex: 2,
         onTap: (index) {
           setState(() {
-            listener!.cancel();
-            log('cencle');
+            if (context.read<AppData>().listener != null) {
+              context.read<AppData>().listener!.cancel();
+              context.read<AppData>().listener = null;
+              log('Stop real Time');
+            }
           });
         },
       ),
@@ -590,11 +610,11 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
       } catch (e) {
         log('Error uploading image: $e');
       } finally {
-        userService.updateUserData(
-          fullname: nameController.text,
-          imgUrl: dowurl, // อัปเดตด้วย URL ของภาพ
-        );
         setState(() {
+          userService.updateUserData(
+            fullname: nameController.text,
+            imgUrl: dowurl, // อัปเดตด้วย URL ของภาพ
+          );
           isUploading = false; // อัปโหลดเสร็จแล้ว
         });
         Navigator.of(context).pop(); // ปิดสปินเนอร์เมื่อเสร็จสิ้น
@@ -615,7 +635,7 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
       await db.collection('Users').doc(userid).update(userData);
       userService.updateUserData(
         fullname: nameController.text,
-        imgUrl: dowurl, // อัปเดตด้วย URL ของภาพ
+        imgUrl: url, // อัปเดตด้วย URL ของภาพ
       );
 
       setState(() {
@@ -629,8 +649,11 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
   void startRealtimeGet() {
     String userid = box.read('Userid');
     final collectionRef = db.collection('Users').doc(userid);
-
-    listener = collectionRef.snapshots().listen(
+    if (context.read<AppData>().listener != null) {
+      context.read<AppData>().listener!.cancel();
+      context.read<AppData>().listener = null;
+    }
+    context.read<AppData>().listener = collectionRef.snapshots().listen(
       (documentSnapshot) {
         if (documentSnapshot.exists) {
           var data = documentSnapshot.data();
@@ -644,6 +667,7 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
             addressController.text = data['address'].toString();
             passwordmaskController.text = _maskPassword(
                 data['password'].toString()); // Mask the password here
+            compasswordController.text = data['password'].toString();
             name = data['fullname'].toString();
             passwordController.text = data['password'].toString();
             url = data['img'].toString(); // Update the URL if needed
@@ -663,6 +687,11 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
     box.remove('isLoggedIn');
     box.remove('Userid');
     box.remove('Riderid');
+    if (context.read<AppData>().listener != null) {
+      context.read<AppData>().listener!.cancel();
+      context.read<AppData>().listener = null;
+    }
+    log('Stop real Time');
     Get.off(() => const Login());
   }
 }

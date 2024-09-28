@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 class AppData with ChangeNotifier {
@@ -12,6 +14,7 @@ class AppData with ChangeNotifier {
   String type = '';
   double? latitude; // เก็บ latitude เป็น double?
   double? longitude; // เก็บ longitude เป็น double?
+  StreamSubscription? listener;
 }
 
 class UserProfile {
