@@ -11,6 +11,7 @@ import 'package:quickrider/config/shared/appData.dart';
 import 'package:quickrider/firebase_options.dart';
 import 'package:quickrider/page/Login.dart';
 import 'package:quickrider/page/PageRider/RiderService.dart';
+import 'package:quickrider/page/PageUser/RouteMapPage.dart';
 import 'package:quickrider/page/PageUser/UserService.dart';
 import 'package:quickrider/page/screenpage.dart';
 
@@ -43,7 +44,7 @@ class MyApp extends StatelessWidget {
     riderService.loadUserData();
     return GetMaterialApp(
       title: 'Flutter Demo',
-      home: ScreenPage(),
+      home: RouteMapPage(),
     );
   }
 }
