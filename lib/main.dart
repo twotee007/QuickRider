@@ -44,7 +44,7 @@ class MyApp extends StatelessWidget {
     riderService.loadUserData();
     return GetMaterialApp(
       title: 'Flutter Demo',
-      home: RouteMapPage(),
+      home: Login(),
     );
   }
 }

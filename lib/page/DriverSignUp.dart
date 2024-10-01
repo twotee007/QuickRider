@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:quickrider/config/shared/appData.dart';
@@ -128,7 +129,9 @@ class _DriverSignupState extends State<DriverSignup> {
                             controller: comPasswordCtl,
                           ),
                           _buildTextField(
-                              Icons.phone, 'Mobile Number', phoneCtl),
+                              Icons.phone, 'Mobile Number', phoneCtl,
+                              isMobileNumber: true),
+                          const SizedBox(height: 10),
                           TextField(
                             controller: dateCtl,
                             readOnly: true, // ป้องกันการพิมพ์
@@ -161,6 +164,7 @@ class _DriverSignupState extends State<DriverSignup> {
                               }
                             },
                           ),
+                          const SizedBox(height: 10),
                           _buildTextField(Icons.car_repair, 'Car registration',
                               registrationCtl),
                           Center(child: Text(text)),
@@ -232,12 +236,23 @@ class _DriverSignupState extends State<DriverSignup> {
 
   Widget _buildTextField(
       IconData icon, String hintText, TextEditingController controller,
-      {bool isPassword = false}) {
+      {bool isPassword = false, bool isMobileNumber = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10.0),
       child: TextField(
         controller: controller, // ใช้คอนโทรลเลอร์เพื่อเก็บค่า
         obscureText: isPassword,
+        keyboardType: isMobileNumber
+            ? TextInputType.number
+            : TextInputType
+                .text, // ตั้งค่าให้พิมพ์ได้เฉพาะตัวเลขสำหรับเบอร์โทรศัพท์
+        inputFormatters: isMobileNumber
+            ? <TextInputFormatter>[
+                FilteringTextInputFormatter.digitsOnly, // รับเฉพาะตัวเลข
+                LengthLimitingTextInputFormatter(
+                    10), // จำกัดความยาวสูงสุด 10 ตัว
+              ]
+            : null,
         decoration: InputDecoration(
           prefixIcon: Icon(icon, color: const Color(0xFF412160)),
           hintText: hintText,

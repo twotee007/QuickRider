@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:quickrider/page/PageRider/HomeRider.dart';
@@ -17,7 +18,7 @@ class Login extends StatefulWidget {
 }
 
 class _LoginState extends State<Login> {
-  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   String text = '';
   bool _isPasswordVisible = false; // To track password visibility
@@ -72,7 +73,7 @@ class _LoginState extends State<Login> {
                         ),
                       ),
                       const SizedBox(height: 20), // ขยับลงให้ฟิลด์ห่างจากหัวข้อ
-                      _buildTextField(Icons.person, 'Email', _emailController),
+                      _buildTextField(Icons.phone, 'Phone', _phoneController),
                       _buildPasswordField(Icons.lock, 'Password'),
                       Center(child: Text(text)),
                       const SizedBox(
@@ -141,6 +142,11 @@ class _LoginState extends State<Login> {
       padding: const EdgeInsets.symmetric(vertical: 10.0),
       child: TextField(
         controller: controller,
+        keyboardType: TextInputType.number, // ตั้งค่าให้เป็นแป้นพิมพ์ตัวเลข
+        inputFormatters: <TextInputFormatter>[
+          FilteringTextInputFormatter.digitsOnly, // รับเฉพาะตัวเลข
+          LengthLimitingTextInputFormatter(10), // จำกัดความยาวสูงสุด 10 ตัว
+        ],
         decoration: InputDecoration(
           prefixIcon: Icon(icon, color: const Color(0xFF412160)),
           hintText: hintText,
@@ -192,21 +198,21 @@ class _LoginState extends State<Login> {
   }
 
   void cheacklogin() async {
-    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+    if (_phoneController.text.isEmpty || _passwordController.text.isEmpty) {
       setState(() {
-        text = 'กรุณากรอก Email และ Password ให้ถูกต้อง';
+        text = 'กรุณากรอกเบอร์โทรศัพท์และรหัสผ่านให้ถูกต้อง';
       });
       return;
     }
 
-    // ดึงข้อมูลจาก Firestore
+    // ดึงข้อมูลจาก Firestore โดยใช้เบอร์โทรศัพท์
     QuerySnapshot snapshot = await FirebaseFirestore.instance
         .collection('Users')
-        .where('email', isEqualTo: _emailController.text)
+        .where('phone', isEqualTo: _phoneController.text)
         .get();
 
     if (snapshot.docs.isNotEmpty) {
-      // พบอีเมลในฐานข้อมูล
+      // พบเบอร์โทรในฐานข้อมูล
       String storedPassword =
           snapshot.docs.first['password']; // ดึงรหัสผ่านจากฐานข้อมูล
       String userType =
@@ -235,7 +241,7 @@ class _LoginState extends State<Login> {
       }
     } else {
       setState(() {
-        text = 'ไม่พบอีเมลนี้ในระบบ';
+        text = 'ไม่พบเบอร์โทรนี้ในระบบ';
       });
       return;
     }

@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
@@ -138,7 +139,9 @@ class _UserSignupState extends State<UserSignup> {
                           },
                           controller: comPasswordCtl,
                         ),
-                        _buildTextField(Icons.phone, 'Mobile Number', phoneCtl),
+                        _buildTextField(Icons.phone, 'Mobile Number', phoneCtl,
+                            isMobileNumber: true),
+
                         const SizedBox(height: 10),
                         TextField(
                           controller: dateCtl,
@@ -409,12 +412,23 @@ class _UserSignupState extends State<UserSignup> {
 
   Widget _buildTextField(
       IconData icon, String hintText, TextEditingController controller,
-      {bool isPassword = false}) {
+      {bool isPassword = false, bool isMobileNumber = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10.0),
       child: TextField(
         controller: controller, // ใช้คอนโทรลเลอร์เพื่อเก็บค่า
         obscureText: isPassword,
+        keyboardType: isMobileNumber
+            ? TextInputType.number
+            : TextInputType
+                .text, // ตั้งค่าให้พิมพ์ได้เฉพาะตัวเลขสำหรับเบอร์โทรศัพท์
+        inputFormatters: isMobileNumber
+            ? <TextInputFormatter>[
+                FilteringTextInputFormatter.digitsOnly, // รับเฉพาะตัวเลข
+                LengthLimitingTextInputFormatter(
+                    10), // จำกัดความยาวสูงสุด 10 ตัว
+              ]
+            : null,
         decoration: InputDecoration(
           prefixIcon: Icon(icon, color: const Color(0xFF412160)),
           hintText: hintText,
@@ -593,7 +607,7 @@ class _UserSignupState extends State<UserSignup> {
       // ตรวจสอบว่ารหัสผ่านและการยืนยันรหัสผ่านตรงกัน
       if (passwordCtl.text.trim() != comPasswordCtl.text.trim()) {
         setState(() {
-          text = 'รหัสผ่านไม่เหมือนกันกรุณาใส่ให้ตรงกัน';
+          text = 'รหัสผ่านไม่ตรงกัน';
           _isLoading = false; // จบการโหลดเมื่อมีข้อผิดพลาด
         });
         return;
