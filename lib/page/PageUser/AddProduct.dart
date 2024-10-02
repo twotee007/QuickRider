@@ -431,19 +431,11 @@ class _AddProductPageState extends State<AddProductPage> {
                               Center(
                                 child: ElevatedButton(
                                   onPressed: () {
-                                    if (_validateFields()) {
-                                      // ตรวจสอบว่ากรอกครบหรือไม่
-                                      _submitData();
-                                    } else {
-                                      // แสดงข้อความเตือน
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                              'กรุณากรอกข้อมูลให้ครบทุกช่อง'),
-                                        ),
-                                      );
+                                    // ตรวจสอบว่าฟิลด์ทั้งหมดถูกกรอกครบหรือไม่
+                                    if (_validateFields(context)) {
+                                      _submitData(); // ส่งข้อมูลถ้าข้อมูลครบ
                                     }
+                                    // หาก `_validateFields` คืนค่า false จะมีการแสดงข้อความเตือนอยู่ในฟังก์ชันนั้นแล้ว
                                   },
                                   style: ElevatedButton.styleFrom(
                                     padding: const EdgeInsets.symmetric(
@@ -534,10 +526,25 @@ class _AddProductPageState extends State<AddProductPage> {
     });
   }
 
-  bool _validateFields() {
+  bool _validateFields(BuildContext context) {
     // ตรวจสอบที่อยู่จัดส่ง
     if (_shippingAddressController.text.isEmpty) {
-      return false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('กรุณากรอกที่อยู่จัดส่ง'),
+        ),
+      );
+      return false; // คืนค่า false ถ้าไม่กรอกที่อยู่
+    }
+
+    // ตรวจสอบเบอร์โทรศัพท์ผู้รับ
+    if (_phoneController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('กรุณากรอกเบอร์โทรศัพท์ผู้รับ'),
+        ),
+      );
+      return false; // คืนค่า false ถ้าเบอร์โทรศัพท์ผู้รับไม่กรอก
     }
 
     // ตรวจสอบฟิลด์ในแต่ละรายการสินค้า
@@ -545,11 +552,26 @@ class _AddProductPageState extends State<AddProductPage> {
       if (product['productName'].text.isEmpty ||
           product['productQuantity'].text.isEmpty ||
           product['productDetails'].text.isEmpty) {
-        return false; // ถ้าพบช่องว่างให้คืนค่า false
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('กรุณากรอกข้อมูลให้ครบทุกช่อง'),
+          ),
+        );
+        return false; // คืนค่า false ถ้าข้อมูลไม่ครบ
+      }
+
+      // ตรวจสอบรูปภาพ
+      if (product['image'] == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('กรุณาใส่รูปภาพ'),
+          ),
+        );
+        return false; // คืนค่า false ถ้าไม่มีรูปภาพ
       }
     }
 
-    // ถ้าข้อมูลครบทุกช่องคืนค่า true
+    // ถ้าข้อมูลครบทุกช่องและมีรูปภาพครบทุกสินค้าคืนค่า true
     return true;
   }
 
