@@ -248,16 +248,20 @@ class _AddProductPageState extends State<AddProductPage> {
                                 ],
                               ),
                               const SizedBox(
-                                  height: 0), // ช่องว่างระหว่างลูกศรกับวงกลม
+                                  height: 10), // ช่องว่างระหว่างลูกศรกับวงกลม
                               Text('กรอกเบอร์ผู้รับ'),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.center,
+                              const SizedBox(height: 20),
+
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment
+                                    .center, // จัดให้อยู่ด้านขวา
                                 children: [
                                   Container(
                                     margin: const EdgeInsets.only(
-                                        left: 10), // ขยับไปทางซ้าย
+                                        right:
+                                            30), // ปรับเป็น right แทน left เพื่อขยับไปทางขวา
                                     child: SizedBox(
-                                      width: 150,
+                                      width: 200,
                                       child: TextField(
                                         controller: _phoneController,
                                         onChanged: (value) {
@@ -276,19 +280,22 @@ class _AddProductPageState extends State<AddProductPage> {
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(height: 0),
                                 ],
                               ),
+                              const SizedBox(height: 30),
+
                               _buildTextField('ที่อยู่จัดส่งที่:',
                                   _shippingAddressController),
                               const SizedBox(height: 30),
                               Container(
                                 margin: const EdgeInsets.symmetric(
-                                    vertical: 20), // กำหนดระยะห่างแนวตั้ง
-                                height: 1, // ความสูงของเส้น
-                                color: Colors.grey, // สีของเส้น
+                                    vertical: 20), // ระยะห่างแนวตั้ง
+                                height: 5, // ความสูงของเส้น
+                                color: const Color.fromARGB(
+                                    255, 59, 0, 102), // สีของเส้น
                               ),
 
+                              // แสดงรายการสินค้าพร้อมปุ่มลบ
                               ..._productControllers
                                   .asMap()
                                   .entries
@@ -299,56 +306,91 @@ class _AddProductPageState extends State<AddProductPage> {
                                 return Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
+                                    if (index != 0)
+                                      Divider(
+                                        color: Color(0xFF412160), // สีม่วง
+                                        thickness: 3, // ความหนา
+                                      ),
+                                    const SizedBox(height: 10),
+
+                                    // แสดงข้อความ "รายการที่ X"
+                                    Text(
+                                      'รายการที่ ${index + 1}', // แสดงหมายเลขรายการ
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color.fromARGB(
+                                            255, 255, 4, 4), // สีม่วงเข้ม
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+
+                                    Stack(
                                       children: [
-                                        const SizedBox(width: 30),
-                                        // วงกลมสำหรับไอคอนเพิ่มรูปภาพ
-                                        Center(
-                                          child: Container(
-                                            width: 120,
-                                            height: 120,
-                                            decoration: BoxDecoration(
-                                              shape: BoxShape.circle,
-                                              color: Colors.white,
-                                              border: Border.all(
-                                                color: Color(0xFF412160),
-                                                width: 1,
-                                              ),
-                                            ),
-                                            child: InkWell(
-                                              splashColor: Colors.purple
-                                                  .withOpacity(0.5),
-                                              highlightColor: Colors.purple
-                                                  .withOpacity(0.5),
-                                              child: Center(
-                                                child: product['image'] == null
-                                                    // ตรวจสอบว่ามีรูปภาพหรือไม่
-                                                    ? Icon(
-                                                        Icons
-                                                            .add_photo_alternate_outlined,
-                                                        color:
-                                                            Color(0xFF412160),
-                                                        size: 80,
-                                                      )
-                                                    : ClipOval(
-                                                        // แสดงรูปภาพในรูปทรงวงกลม
-                                                        child: Image.file(
-                                                          product['image'],
-                                                          fit: BoxFit.cover,
-                                                          width: 120,
-                                                          height: 120,
-                                                        ),
-                                                      ),
-                                              ),
-                                              onTap: () {
-                                                _showImageSourceActionSheet(
-                                                    context,
-                                                    index); // ส่ง index ไปให้ถูกต้อง
+                                        // แสดงถังขยะเฉพาะรายการที่ไม่ใช่รายการแรก
+                                        if (index != 0)
+                                          Positioned(
+                                            top: 0,
+                                            left: 0,
+                                            child: IconButton(
+                                              icon: const Icon(Icons.delete,
+                                                  color: Colors.red),
+                                              onPressed: () {
+                                                _removeProductField(
+                                                    index); // เรียกฟังก์ชันลบสินค้า
                                               },
                                             ),
                                           ),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            const SizedBox(width: 30),
+                                            // วงกลมสำหรับไอคอนเพิ่มรูปภาพ
+                                            Center(
+                                              child: Container(
+                                                width: 120,
+                                                height: 120,
+                                                decoration: BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  color: Colors.white,
+                                                  border: Border.all(
+                                                    color: Color(0xFF412160),
+                                                    width: 1,
+                                                  ),
+                                                ),
+                                                child: InkWell(
+                                                  splashColor: Colors.purple
+                                                      .withOpacity(0.5),
+                                                  highlightColor: Colors.purple
+                                                      .withOpacity(0.5),
+                                                  child: Center(
+                                                    child: product['image'] ==
+                                                            null
+                                                        ? Icon(
+                                                            Icons
+                                                                .add_photo_alternate_outlined,
+                                                            color: Color(
+                                                                0xFF412160),
+                                                            size: 80,
+                                                          )
+                                                        : ClipOval(
+                                                            child: Image.file(
+                                                              product['image'],
+                                                              fit: BoxFit.cover,
+                                                              width: 120,
+                                                              height: 120,
+                                                            ),
+                                                          ),
+                                                  ),
+                                                  onTap: () {
+                                                    _showImageSourceActionSheet(
+                                                        context, index);
+                                                  },
+                                                ),
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ],
                                     ),
@@ -364,19 +406,17 @@ class _AddProductPageState extends State<AddProductPage> {
                                     const SizedBox(height: 20),
                                   ],
                                 );
-                              }).toList(), // จบด้วย toList() ที่นี่
+                              }).toList(),
 
-                              // Button to add more products
+                              // ปุ่มเพิ่มรายการสินค้าใหม่
                               Center(
                                 child: ElevatedButton(
                                   onPressed: _addProductFields,
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor:
                                         const Color.fromARGB(255, 76, 243, 112),
-                                    padding: EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                        vertical:
-                                            12), // กำหนด padding เพื่อทำให้ปุ่มไม่ยืดเกินไป
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 16, vertical: 12),
                                   ),
                                   child: const Icon(
                                     Icons.add, // ไอคอน +
@@ -387,10 +427,24 @@ class _AddProductPageState extends State<AddProductPage> {
 
                               const SizedBox(height: 30),
 
-                              // Submit button to process the products
+                              // ปุ่มส่งข้อมูล
                               Center(
                                 child: ElevatedButton(
-                                  onPressed: _submitData,
+                                  onPressed: () {
+                                    if (_validateFields()) {
+                                      // ตรวจสอบว่ากรอกครบหรือไม่
+                                      _submitData();
+                                    } else {
+                                      // แสดงข้อความเตือน
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                              'กรุณากรอกข้อมูลให้ครบทุกช่อง'),
+                                        ),
+                                      );
+                                    }
+                                  },
                                   style: ElevatedButton.styleFrom(
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 50, vertical: 15),
@@ -408,6 +462,9 @@ class _AddProductPageState extends State<AddProductPage> {
                                   ),
                                 ),
                               ),
+                              const SizedBox(
+                                  height:
+                                      10), // ปรับลดขนาดของ SizedBox หรือ padding ด้านล่าง
                             ],
                           ),
                         ),
@@ -427,7 +484,7 @@ class _AddProductPageState extends State<AddProductPage> {
                 elevation: 5,
                 borderRadius: BorderRadius.circular(5),
                 child: Container(
-                  padding: const EdgeInsets.all(8), // เพิ่ม padding ภายในกรอบ
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.grey),
                     borderRadius: BorderRadius.circular(5),
@@ -441,13 +498,11 @@ class _AddProductPageState extends State<AddProductPage> {
                           _selectPhoneNumber(phone);
                         },
                         child: Container(
-                          // กรอบใหม่สำหรับแต่ละหมายเลข
-                          margin: const EdgeInsets.symmetric(
-                              vertical: 4), // ระยะห่างระหว่างหมายเลข
-                          padding: const EdgeInsets.all(8), // Padding ภายในกรอบ
+                          margin: const EdgeInsets.symmetric(vertical: 4),
+                          padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey), // ขอบกรอบ
-                            borderRadius: BorderRadius.circular(5), // ขอบโค้ง
+                            border: Border.all(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(5),
                             color: Colors.white,
                           ),
                           child: RichText(
@@ -470,6 +525,32 @@ class _AddProductPageState extends State<AddProductPage> {
         ],
       ),
     );
+  }
+
+  void _removeProductField(int index) {
+    setState(() {
+      _productControllers.removeAt(
+          index); // ลบรายการที่ตำแหน่ง index ออกจาก _productControllers
+    });
+  }
+
+  bool _validateFields() {
+    // ตรวจสอบที่อยู่จัดส่ง
+    if (_shippingAddressController.text.isEmpty) {
+      return false;
+    }
+
+    // ตรวจสอบฟิลด์ในแต่ละรายการสินค้า
+    for (var product in _productControllers) {
+      if (product['productName'].text.isEmpty ||
+          product['productQuantity'].text.isEmpty ||
+          product['productDetails'].text.isEmpty) {
+        return false; // ถ้าพบช่องว่างให้คืนค่า false
+      }
+    }
+
+    // ถ้าข้อมูลครบทุกช่องคืนค่า true
+    return true;
   }
 
   void _showImageSourceActionSheet(BuildContext context, int index) {
