@@ -529,20 +529,26 @@ class _AddProductPageState extends State<AddProductPage> {
   bool _validateFields(BuildContext context) {
     // ตรวจสอบที่อยู่จัดส่ง
     if (_shippingAddressController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('กรุณากรอกที่อยู่จัดส่ง'),
-        ),
+      Get.snackbar(
+        'ข้อผิดพลาด', // หัวข้อ
+        'กรุณากรอกที่อยู่จัดส่ง',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red, // สีพื้นหลังเป็นสีแดง
+        colorText: Colors.white, // สีข้อความเป็นสีขาว
+        duration: const Duration(seconds: 3), // ระยะเวลา 3 วินาที
       );
       return false; // คืนค่า false ถ้าไม่กรอกที่อยู่
     }
 
     // ตรวจสอบเบอร์โทรศัพท์ผู้รับ
     if (_phoneController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('กรุณากรอกเบอร์โทรศัพท์ผู้รับ'),
-        ),
+      Get.snackbar(
+        'ข้อผิดพลาด', // หัวข้อ
+        'กรุณากรอกเบอร์โทรศัพท์ผู้รับ',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 3),
       );
       return false; // คืนค่า false ถ้าเบอร์โทรศัพท์ผู้รับไม่กรอก
     }
@@ -552,20 +558,26 @@ class _AddProductPageState extends State<AddProductPage> {
       if (product['productName'].text.isEmpty ||
           product['productQuantity'].text.isEmpty ||
           product['productDetails'].text.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('กรุณากรอกข้อมูลให้ครบทุกช่อง'),
-          ),
+        Get.snackbar(
+          'ข้อผิดพลาด', // หัวข้อ
+          'กรุณากรอกข้อมูลให้ครบทุกช่อง',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 3),
         );
         return false; // คืนค่า false ถ้าข้อมูลไม่ครบ
       }
 
       // ตรวจสอบรูปภาพ
       if (product['image'] == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('กรุณาใส่รูปภาพ'),
-          ),
+        Get.snackbar(
+          'ข้อผิดพลาด', // หัวข้อ
+          'กรุณาใส่รูปภาพ',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 3),
         );
         return false; // คืนค่า false ถ้าไม่มีรูปภาพ
       }

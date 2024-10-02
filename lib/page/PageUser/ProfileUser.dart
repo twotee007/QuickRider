@@ -281,26 +281,94 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
                           // ตรวจสอบว่าฟิลด์ทั้งหมดถูกกรอกข้อมูลหรือไม่
                           if (nameController.text.isEmpty) {
                             errorMessage = 'กรุณากรอกชื่อเต็ม';
+                            // แสดงข้อความแจ้งเตือน
+                            Get.snackbar(
+                              'ข้อผิดพลาด',
+                              'กรุณากรอกชื่อเต็ม',
+                              snackPosition: SnackPosition.BOTTOM,
+                              backgroundColor: Colors.red,
+                              colorText: Colors.white,
+                              duration: const Duration(seconds: 3),
+                            );
                           } else if (emailController.text.isEmpty ||
                               !RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
                                   .hasMatch(emailController.text)) {
                             errorMessage = 'กรุณากรอกอีเมลให้ถูกต้อง';
+                            // แสดงข้อความแจ้งเตือน
+                            Get.snackbar(
+                              'ข้อผิดพลาด',
+                              'กรุณากรอกอีเมลให้ถูกต้อง',
+                              snackPosition: SnackPosition.BOTTOM,
+                              backgroundColor: Colors.red,
+                              colorText: Colors.white,
+                              duration: const Duration(seconds: 3),
+                            );
                           } else if (phoneController.text.isEmpty ||
                               phoneController.text.length != 10) {
                             errorMessage = 'หมายเลขโทรศัพท์ต้องมี 10 หลัก';
+                            // แสดงข้อความแจ้งเตือน
+                            Get.snackbar(
+                              'ข้อผิดพลาด',
+                              'หมายเลขโทรศัพท์ต้องมี 10 หลัก',
+                              snackPosition: SnackPosition.BOTTOM,
+                              backgroundColor: Colors.red,
+                              colorText: Colors.white,
+                              duration: const Duration(seconds: 3),
+                            );
                           } else if (dateController.text.isEmpty) {
                             errorMessage = 'กรุณากรอกวันที่เกิด';
+                            // แสดงข้อความแจ้งเตือน
+                            Get.snackbar(
+                              'ข้อผิดพลาด',
+                              'กรุณากรอกวันที่เกิด',
+                              snackPosition: SnackPosition.BOTTOM,
+                              backgroundColor: Colors.red,
+                              colorText: Colors.white,
+                              duration: const Duration(seconds: 3),
+                            );
                           } else if (addressController.text.isEmpty) {
                             errorMessage = 'กรุณากรอกที่อยู่';
+                            // แสดงข้อความแจ้งเตือน
+                            Get.snackbar(
+                              'ข้อผิดพลาด',
+                              'กรุณากรอกที่อยู่',
+                              snackPosition: SnackPosition.BOTTOM,
+                              backgroundColor: Colors.red,
+                              colorText: Colors.white,
+                              duration: const Duration(seconds: 3),
+                            );
                           } else if (passwordController.text.isEmpty ||
                               compasswordController.text.isEmpty) {
                             errorMessage = 'กรุณากรอกรหัสผ่านและยืนยันรหัสผ่าน';
+                            // แสดงข้อความแจ้งเตือน
+                            Get.snackbar(
+                              'ข้อผิดพลาด',
+                              'กรุณากรอกรหัสผ่านและยืนยันรหัสผ่าน',
+                              snackPosition: SnackPosition.BOTTOM,
+                              backgroundColor: Colors.red,
+                              colorText: Colors.white,
+                              duration: const Duration(seconds: 3),
+                            );
                           } else if (passwordController.text !=
                               compasswordController.text) {
                             errorMessage = 'รหัสผ่านไม่ตรงกัน';
+                            // แสดงข้อความแจ้งเตือน
+                            Get.snackbar(
+                              'ข้อผิดพลาด',
+                              'รหัสผ่านไม่ตรงกัน',
+                              snackPosition: SnackPosition.BOTTOM,
+                              backgroundColor: Colors.red,
+                              colorText: Colors.white,
+                              duration: const Duration(seconds: 3),
+                            );
                           } else {
-                            errorMessage = ''; // ล้างข้อความข้อผิดพลาด
-                            uploadUsersToFirebase(); // อัปโหลดข้อมูลไปยัง Firebase
+                            // ล้างข้อความข้อผิดพลาด
+                            errorMessage =
+                                ''; // หากข้อมูลครบถ้วน ถูกต้อง, ทำการอัปโหลดข้อมูลไปยัง Firebase
+                            uploadUsersToFirebase();
+
+                            // อัปโหลดข้อมูลไปยัง Firebase
+                            // แสดงข้อความแจ้งเตือนการอัปโหลดสำเร็จ
                           }
                         });
                       },
@@ -335,6 +403,7 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
     TextEditingController? controller,
     bool isPasswordVisible = false,
     VoidCallback? togglePasswordVisibility,
+    String? errorMessage, // เพิ่ม errorMessage เพื่อใช้แสดงข้อความผิดพลาด
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -396,6 +465,7 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
                   )
                 : null,
             isDense: true,
+            errorText: errorMessage, // ใช้ errorMessage ถ้ามีข้อผิดพลาด
           ),
           onTap: (label == "Date of Birth") // เมื่อแตะช่องกรอกวันที่เกิด
               ? () async {
@@ -409,7 +479,8 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
                   if (pickedDate != null) {
                     String formattedDate =
                         "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}";
-                    dateController.text = formattedDate;
+                    controller?.text =
+                        formattedDate; // ใช้ controller ที่ส่งมาจากภายนอก
                   }
                 }
               : null, // ไม่ทำอะไรหากไม่ใช่วันที่เกิด
