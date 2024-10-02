@@ -223,6 +223,7 @@ class _LoginState extends State<Login> {
         if (userType == 'user') {
           box.write('isLoggedIn', true);
           box.write('Userid', docId);
+          log('dasddasdadad');
           final userService = Get.put(UserService());
           userService.loadUserData();
           Get.to(() => const HomeUserpage());

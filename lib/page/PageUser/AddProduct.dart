@@ -27,6 +27,7 @@ class _AddProductPageState extends State<AddProductPage> {
       TextEditingController();
   final TextEditingController _shippingAddressController =
       TextEditingController();
+  List<Map<String, dynamic>> _productControllers = [];
   final ImagePicker _picker = ImagePicker();
   final userService = Get.find<UserService>();
   File? _imageFile; // ตัวแปรสำหรับเก็บรูปภาพที่เลือก
@@ -34,14 +35,6 @@ class _AddProductPageState extends State<AddProductPage> {
   final FirebaseFirestore db = FirebaseFirestore.instance;
   late Future<void> loadDate;
   late Map<String, dynamic>? user;
-  Future<void> _pickImage(ImageSource source) async {
-    final XFile? pickedFile = await _picker.pickImage(source: source);
-    if (pickedFile != null) {
-      setState(() {
-        _imageFile = File(pickedFile.path); // อัปเดตรูปภาพในสถานะ
-      });
-    }
-  }
 
   @override
   void initState() {
@@ -49,6 +42,29 @@ class _AddProductPageState extends State<AddProductPage> {
     super.initState();
     // loadDate = loadDataAstnc();
     phoneuser();
+    _addProductFields();
+  }
+
+  void _addProductFields() {
+    setState(() {
+      Map<String, dynamic> productMap = {
+        'productName': TextEditingController(),
+        'productQuantity': TextEditingController(),
+        'productDetails': TextEditingController(),
+        'image': null,
+      };
+      _productControllers.add(productMap);
+    });
+  }
+
+  Future<void> _pickImage(ImageSource source, int index) async {
+    final XFile? pickedFile = await _picker.pickImage(source: source);
+    if (pickedFile != null) {
+      setState(() {
+        _productControllers[index]['image'] =
+            File(pickedFile.path); // อัปเดตรูปภาพในสถานะ
+      });
+    }
   }
 
   void phoneuser() async {
@@ -233,110 +249,148 @@ class _AddProductPageState extends State<AddProductPage> {
                               ),
                               const SizedBox(
                                   height: 0), // ช่องว่างระหว่างลูกศรกับวงกลม
-
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                              Text('กรอกเบอร์ผู้รับ'),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
-                                  const SizedBox(width: 30),
-                                  // วงกลมสำหรับไอคอนเพิ่มรูปภาพ
-                                  Center(
-                                    child: Container(
-                                      width: 120,
-                                      height: 120,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: Colors.white,
-                                        border: Border.all(
-                                          color: Color(0xFF412160),
-                                          width: 1,
-                                        ),
-                                      ),
-                                      child: InkWell(
-                                        splashColor:
-                                            Colors.purple.withOpacity(0.5),
-                                        highlightColor:
-                                            Colors.purple.withOpacity(0.5),
-                                        child: Center(
-                                          child: _imageFile ==
-                                                  null // ตรวจสอบว่ามีรูปภาพหรือไม่
-                                              ? Icon(
-                                                  Icons
-                                                      .add_photo_alternate_outlined,
-                                                  color: Color(0xFF412160),
-                                                  size: 80,
-                                                )
-                                              : ClipOval(
-                                                  // แสดงรูปภาพในรูปทรงวงกลม
-                                                  child: Image.file(
-                                                    _imageFile!,
-                                                    fit: BoxFit.cover,
-                                                    width: 120,
-                                                    height: 120,
-                                                  ),
-                                                ),
-                                        ),
-                                        onTap: () {
-                                          _showImageSourceActionSheet(context);
+                                  Container(
+                                    margin: const EdgeInsets.only(
+                                        left: 10), // ขยับไปทางซ้าย
+                                    child: SizedBox(
+                                      width: 150,
+                                      child: TextField(
+                                        controller: _phoneController,
+                                        onChanged: (value) {
+                                          _searchPhoneNumber(value);
                                         },
+                                        keyboardType: TextInputType
+                                            .phone, // กำหนดให้เป็นแป้นพิมพ์สำหรับหมายเลขโทรศัพท์
+                                        decoration: InputDecoration(
+                                          labelText: 'เบอร์โทรผู้รับ',
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(
+                                                10), // ขอบโค้ง
+                                          ),
+                                          isDense: true,
+                                        ),
                                       ),
                                     ),
                                   ),
-
-                                  // คอลัมน์สำหรับกรอบค้นหาเบอร์โทร
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: [
-                                        Container(
-                                          margin: const EdgeInsets.only(
-                                              left: 10), // ขยับไปทางซ้าย
-                                          child: SizedBox(
-                                            width: 150,
-                                            child: TextField(
-                                              controller: _phoneController,
-                                              onChanged: (value) {
-                                                _searchPhoneNumber(value);
-                                              },
-                                              keyboardType: TextInputType
-                                                  .phone, // กำหนดให้เป็นแป้นพิมพ์สำหรับหมายเลขโทรศัพท์
-                                              decoration: InputDecoration(
-                                                labelText: 'เบอร์โทรผู้รับ',
-                                                border: OutlineInputBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          10), // ขอบโค้ง
-                                                ),
-                                                isDense: true,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(height: 0),
-                                      ],
-                                    ),
-                                  ),
+                                  const SizedBox(height: 0),
                                 ],
                               ),
-                              const SizedBox(height: 30),
-                              _buildTextField(
-                                  'ชื่อสินค้า:', _productNameController),
-                              const SizedBox(height: 20),
-                              _buildQuantityField(
-                                  'จำนวนสินค้า:', _productQuantityController),
-                              const SizedBox(height: 20),
-                              _buildTextField('รายละเอียดสินค้า:',
-                                  _productDetailsController),
-                              const SizedBox(height: 20),
                               _buildTextField('ที่อยู่จัดส่งที่:',
                                   _shippingAddressController),
                               const SizedBox(height: 30),
+                              Container(
+                                margin: const EdgeInsets.symmetric(
+                                    vertical: 20), // กำหนดระยะห่างแนวตั้ง
+                                height: 1, // ความสูงของเส้น
+                                color: Colors.grey, // สีของเส้น
+                              ),
+
+                              ..._productControllers
+                                  .asMap()
+                                  .entries
+                                  .map((entry) {
+                                int index = entry.key;
+                                var product = entry.value;
+
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        const SizedBox(width: 30),
+                                        // วงกลมสำหรับไอคอนเพิ่มรูปภาพ
+                                        Center(
+                                          child: Container(
+                                            width: 120,
+                                            height: 120,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: Colors.white,
+                                              border: Border.all(
+                                                color: Color(0xFF412160),
+                                                width: 1,
+                                              ),
+                                            ),
+                                            child: InkWell(
+                                              splashColor: Colors.purple
+                                                  .withOpacity(0.5),
+                                              highlightColor: Colors.purple
+                                                  .withOpacity(0.5),
+                                              child: Center(
+                                                child: product['image'] == null
+                                                    // ตรวจสอบว่ามีรูปภาพหรือไม่
+                                                    ? Icon(
+                                                        Icons
+                                                            .add_photo_alternate_outlined,
+                                                        color:
+                                                            Color(0xFF412160),
+                                                        size: 80,
+                                                      )
+                                                    : ClipOval(
+                                                        // แสดงรูปภาพในรูปทรงวงกลม
+                                                        child: Image.file(
+                                                          product['image'],
+                                                          fit: BoxFit.cover,
+                                                          width: 120,
+                                                          height: 120,
+                                                        ),
+                                                      ),
+                                              ),
+                                              onTap: () {
+                                                _showImageSourceActionSheet(
+                                                    context,
+                                                    index); // ส่ง index ไปให้ถูกต้อง
+                                              },
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 30),
+                                    _buildTextField(
+                                        'ชื่อสินค้า:', product['productName']),
+                                    const SizedBox(height: 20),
+                                    _buildQuantityField('จำนวนสินค้า:',
+                                        product['productQuantity']),
+                                    const SizedBox(height: 20),
+                                    _buildTextField('รายละเอียดสินค้า:',
+                                        product['productDetails']),
+                                    const SizedBox(height: 20),
+                                  ],
+                                );
+                              }).toList(), // จบด้วย toList() ที่นี่
+
+                              // Button to add more products
                               Center(
                                 child: ElevatedButton(
-                                  onPressed: () {
-                                    // โค้ดสำหรับการจัดส่งสินค้า
-                                  },
+                                  onPressed: _addProductFields,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor:
+                                        const Color.fromARGB(255, 76, 243, 112),
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical:
+                                            12), // กำหนด padding เพื่อทำให้ปุ่มไม่ยืดเกินไป
+                                  ),
+                                  child: const Icon(
+                                    Icons.add, // ไอคอน +
+                                    size: 24, // ขนาดไอคอนที่ต้องการ
+                                  ),
+                                ),
+                              ),
+
+                              const SizedBox(height: 30),
+
+                              // Submit button to process the products
+                              Center(
+                                child: ElevatedButton(
+                                  onPressed: _submitData,
                                   style: ElevatedButton.styleFrom(
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 50, vertical: 15),
@@ -364,8 +418,6 @@ class _AddProductPageState extends State<AddProductPage> {
               ),
             ),
           ),
-
-          // ส่วนกรอบผลการค้นหา
           if (_filteredPhones.isNotEmpty)
             Positioned(
               left: 20,
@@ -420,7 +472,7 @@ class _AddProductPageState extends State<AddProductPage> {
     );
   }
 
-  void _showImageSourceActionSheet(BuildContext context) {
+  void _showImageSourceActionSheet(BuildContext context, int index) {
     showModalBottomSheet(
       context: context,
       builder: (BuildContext context) {
@@ -433,7 +485,7 @@ class _AddProductPageState extends State<AddProductPage> {
                 title: Text('ถ่ายรูป'),
                 onTap: () {
                   Navigator.pop(context);
-                  _pickImage(ImageSource.camera);
+                  _pickImage(ImageSource.camera, index);
                 },
               ),
               ListTile(
@@ -441,7 +493,7 @@ class _AddProductPageState extends State<AddProductPage> {
                 title: Text('เลือกจากแกลเลอรี่'),
                 onTap: () {
                   Navigator.pop(context);
-                  _pickImage(ImageSource.gallery);
+                  _pickImage(ImageSource.gallery, index);
                 },
               ),
             ],
@@ -483,26 +535,21 @@ class _AddProductPageState extends State<AddProductPage> {
     return spans;
   }
 
-  // Future<void> loadDataAstnc() async {
-  //   String userid = box.read('Userid');
-  //   try {
-  //     // เข้าถึงเอกสารโดยใช้ Document ID
-  //     var docSnapshot = await db.collection('Users').doc(userid).get();
+  void _submitData() {
+    for (var product in _productControllers) {
+      String productName = product['productName']?.text ?? '';
+      String productQuantity = product['productQuantity']?.text ?? '';
+      String productDetails = product['productDetails']?.text ?? '';
+      File? image = product['image'];
 
-  //     if (docSnapshot.exists) {
-  //       log('Document ID: ${docSnapshot.id}'); // แสดง ID ของเอกสาร
-
-  //       // เก็บข้อมูลใน Map
-  //       user = docSnapshot.data() as Map<String, dynamic>?;
-  //       log('Data: $user'); // แสดงข้อมูลทั้งหมด
-
-  //       // อัปเดต UI เมื่อโหลดข้อมูลเสร็จ
-  //       setState(() {}); // เรียกใช้ setState เพื่อให้ UI อัปเดต
-  //     } else {
-  //       log('No user found with docId: ${docSnapshot.id}');
-  //     }
-  //   } catch (e) {
-  //     log('Error fetching user: $e');
-  //   }
-  // }
+      // Print or process the product information
+      log('ชื่อสินค้า: $productName');
+      log('จำนวนสินค้า: $productQuantity');
+      log('รายละเอียดสินค้า: $productDetails');
+      log('เบอร์โทรศัพท์: ${_phoneController.text}');
+      log('ที่อยู่:${_shippingAddressController.text}');
+      log('รูปภาพ: ${image?.path}');
+      log('-------------------------');
+    }
+  }
 }
