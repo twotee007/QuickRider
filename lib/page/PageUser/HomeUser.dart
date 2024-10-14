@@ -6,6 +6,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:quickrider/page/ChangePage/NavigationBarUser.dart';
 import 'package:quickrider/page/PageUser/AddProduct.dart';
+import 'package:quickrider/page/PageUser/DeliveryStatus.dart';
 import 'package:quickrider/page/PageUser/SharedWidget.dart';
 import 'package:quickrider/page/PageUser/UserService.dart';
 
@@ -192,7 +193,15 @@ class _HomeUserpageState extends State<HomeUserpage>
                       ],
                     ),
                     ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Get.to(
+                          () => DeliveryStatusScreen(),
+                          transition: Transition.cupertino,
+                          duration: Duration(
+                              milliseconds:
+                                  300), // ระยะเวลาที่ใช้ในการเปลี่ยนหน้า
+                        );
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF00C853),
                         padding: const EdgeInsets.symmetric(
