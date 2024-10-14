@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:quickrider/page/PageRider/JobdscriptionRider.dart';
 import 'package:quickrider/page/PageRider/RiderService.dart';
 import 'package:quickrider/page/PageRider/widgetRider.dart';
 import 'package:quickrider/page/ChangePage/NavigationBarRider.dart';
@@ -30,10 +31,8 @@ class _HomeRiderPageState extends State<HomeRiderPage>
   void initState() {
     // TODO: implement initState
     super.initState();
-    // final box = GetStorage();
-    // box.remove('isLoggedIn'); // ลบสถานะการล็อกอิน
-    // box.remove('Userid'); // ลบ User ID หากมี
-    // box.remove('Riderid'); // ลบ Rider ID หากมี
+    final riderService = Get.put(RiderService());
+    riderService.loadUserData();
   }
 
   @override
@@ -55,6 +54,8 @@ class _HomeRiderPageState extends State<HomeRiderPage>
               padding: const EdgeInsets.only(top: 140),
               child: Container(
                 width: MediaQuery.of(context).size.width * 1,
+                height:
+                    MediaQuery.of(context).size.height, // ใช้ความสูงของหน้าจอ
                 decoration: const BoxDecoration(
                   color: Color.fromARGB(255, 255, 255, 255),
                   borderRadius: BorderRadius.only(
@@ -63,6 +64,7 @@ class _HomeRiderPageState extends State<HomeRiderPage>
                   ),
                 ),
                 child: SingleChildScrollView(
+                  // ห่อ Column ด้วย SingleChildScrollView
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
@@ -96,16 +98,7 @@ class _HomeRiderPageState extends State<HomeRiderPage>
                         ),
                       ),
                       const SizedBox(height: 20),
-                      Column(
-                        children: [
-                          _orderRider('อัครผล', 'วู้ดดี้ จิน'),
-                          _orderRider('อัครผล', 'วู้ดดี้ จิน'),
-                          _orderRider('อัครผล', 'วู้ดดี้ จิน'),
-                          _orderRider('อัครผล', 'วู้ดดี้ จิน'),
-                          _orderRider('อัครผล', 'วู้ดดี้ จิน'),
-                          _orderRider('อัครผล', 'วู้ดดี้ จิน'),
-                        ],
-                      ),
+                      _buildSentItems(), // เรียกฟังก์ชันแสดงออเดอร์
                     ],
                   ),
                 ),
@@ -121,6 +114,15 @@ class _HomeRiderPageState extends State<HomeRiderPage>
     );
   }
 
+  Widget _buildSentItems() {
+    return Column(
+      children: [
+        const SizedBox(height: 10),
+        _orderRider('อัครผล', 'วู้ดดี้ จิน'),
+      ],
+    );
+  }
+
   Widget _orderRider(String namesender, String namereceiver) {
     return Column(
       children: [
@@ -128,8 +130,9 @@ class _HomeRiderPageState extends State<HomeRiderPage>
           children: [
             GestureDetector(
               onTap: () {
-                // Call your method here
-                log('กดสำเร็จ');
+                Get.to(() => const JobdscriptionriderPage(),
+                    transition: Transition.rightToLeftWithFade,
+                    duration: const Duration(milliseconds: 300));
               },
               child: Container(
                 width: 360,

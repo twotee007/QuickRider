@@ -65,8 +65,12 @@ class _SignupState extends State<Signup> {
             ),
             SizedBox(height: 80),
             ElevatedButton(
-              onPressed: () {
-                // เมื่อกดปุ่มนี้จะไปยังหน้า DriverSignup
+              onPressed: () async {
+                Position position = await _determinePosition();
+                context.read<AppData>().latitude = position.latitude;
+                context.read<AppData>().longitude = position.longitude;
+                log('Current position: ${position.latitude} ${position.longitude}');
+                setState(() {});
                 Get.to(
                   () => const DriverSignup(),
                   transition:

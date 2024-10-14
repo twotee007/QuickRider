@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:quickrider/page/PageRider/HistoryRider.dart';
 import 'package:quickrider/page/PageRider/HomeRider.dart';
 import 'package:quickrider/page/PageRider/ProfileRider.dart';
 
@@ -37,10 +36,6 @@ class CustomBottomNavigationBarRider extends StatelessWidget {
               label: 'หน้าแรก',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.history),
-              label: 'ประวัติ',
-            ),
-            BottomNavigationBarItem(
               icon: Icon(Icons.person),
               label: 'บัญชี',
             ),
@@ -72,11 +67,6 @@ class CustomBottomNavigationBarRider extends StatelessWidget {
             duration: const Duration(milliseconds: 300));
         break;
       case 1:
-        Get.to(() => const HistoryPageRider(),
-            transition: Transition.noTransition,
-            duration: const Duration(milliseconds: 300));
-        break;
-      case 2:
         Get.to(() => const ProfilePageRider(),
             transition: Transition.noTransition,
             duration: const Duration(milliseconds: 300));

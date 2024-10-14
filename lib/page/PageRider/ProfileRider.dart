@@ -1,14 +1,23 @@
+import 'dart:async';
+import 'dart:developer';
 import 'dart:io';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
+import 'package:quickrider/config/shared/appData.dart';
 import 'package:quickrider/page/ChangePage/NavigationBarRider.dart';
+import 'package:quickrider/page/ChangePage/NavigationBarUser.dart';
 import 'package:quickrider/page/Login.dart';
 import 'package:quickrider/page/PageRider/RiderService.dart';
 import 'package:quickrider/page/PageRider/widgetRider.dart';
+import 'package:uuid/uuid.dart';
 
 class ProfilePageRider extends StatefulWidget {
   const ProfilePageRider({super.key});
@@ -19,8 +28,46 @@ class ProfilePageRider extends StatefulWidget {
 
 class _ProfilePageRiderState extends State<ProfilePageRider>
     with TickerProviderStateMixin {
+  int _selectedIndex = 1;
+  final riderService = Get.find<RiderService>();
+  final ImagePicker picker = ImagePicker();
+  File? imageFile; // ตัวแปรสำหรับเก็บไฟล์รูปภาพที่เลือก
+  bool isUploading = false; // ตัวแปรสำหรับการตรวจสอบสถานะการอัปโหลด
   late Map<String, dynamic>? user;
-  int _selectedIndex = 2;
+  final FirebaseFirestore db = FirebaseFirestore.instance;
+  StreamSubscription? listener;
+  // Function to mask the password
+  late TextEditingController nameController;
+  late TextEditingController emailController;
+  late TextEditingController phoneController;
+  late TextEditingController dateController;
+  late TextEditingController registrationController;
+  late TextEditingController passwordmaskController;
+  late TextEditingController passwordController;
+  late TextEditingController compasswordController;
+  String name = '';
+  String email = '';
+  String date = '';
+  String phone = '';
+  String registration = '';
+  String password = '';
+  String url = '';
+  final box = GetStorage();
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    nameController = TextEditingController();
+    emailController = TextEditingController();
+    phoneController = TextEditingController();
+    dateController = TextEditingController();
+    registrationController = TextEditingController();
+    compasswordController = TextEditingController();
+    passwordController = TextEditingController();
+    passwordmaskController = TextEditingController();
+    compasswordController = TextEditingController();
+    startRealtimeGet();
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -28,10 +75,6 @@ class _ProfilePageRiderState extends State<ProfilePageRider>
     });
   }
 
-  final riderService = Get.find<RiderService>();
-  File? _imageFile;
-
-  // Function to mask the password
   String _maskPassword(String password) {
     if (password.length <= 3) {
       return password; // Return as is if length <= 3
@@ -39,34 +82,64 @@ class _ProfilePageRiderState extends State<ProfilePageRider>
     return password.substring(0, 3) + '*' * (password.length - 3);
   }
 
-  // Function for selecting an image from Gallery
-  Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-
+  Future<void> _pickImage(ImageSource source, StateSetter setState) async {
+    final XFile? pickedFile = await picker.pickImage(source: source);
     if (pickedFile != null) {
       setState(() {
-        _imageFile = File(pickedFile.path);
+        imageFile = File(pickedFile.path); // อัปเดตรูปภาพในสถานะ
       });
     }
   }
 
+  void _showImageSourceActionSheet(BuildContext context, StateSetter setState) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('ถ่ายรูป'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage(ImageSource.camera, setState);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo),
+                title: const Text('เลือกจากแกลเลอรี่'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage(ImageSource.gallery, setState);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   // Function to show edit profile dialog
   void _showEditProfileDialog() {
-    final TextEditingController nameController =
-        TextEditingController(text: riderService.name);
-    final TextEditingController emailController =
-        TextEditingController(text: riderService.email);
-    final TextEditingController phoneController =
-        TextEditingController(text: riderService.phone);
-    final TextEditingController dateController =
-        TextEditingController(text: riderService.date);
-    final TextEditingController addressController =
-        TextEditingController(text: riderService.registration);
-    final TextEditingController passwordController =
-        TextEditingController(text: riderService.password);
-
     bool isPasswordVisible = false; // ใช้สถานะภายใน popup dialog
+    bool isConfirmPasswordVisible = false; // ใช้สถานะภายใน popup dialog
+    String errorMessage = ''; // สำหรับข้อความแสดงข้อผิดพลาด
+
+    // สำรองข้อมูลต้นฉบับก่อนเปิดป๊อปอัพ
+    String originalName = nameController.text;
+    String originalEmail = emailController.text;
+    String originalPhone = phoneController.text;
+    String originalDate = dateController.text;
+    String originalAddress = registrationController.text;
+    String originalPassword = passwordController.text;
+    String originalConfirmPassword = compasswordController.text;
+    var originalImageFile = imageFile; // เก็บไฟล์ภาพเดิม
+    String originalImageUrl = url; // เก็บ URL ของภาพเดิ
+    // เคลียร์ช่อง Confirm Password ให้เป็นค่าว่างเมื่อเปิดป๊อปอัพ
+    compasswordController.clear();
 
     showDialog(
       context: context,
@@ -92,7 +165,19 @@ class _ProfilePageRiderState extends State<ProfilePageRider>
                         IconButton(
                           icon: const Icon(Icons.close),
                           onPressed: () {
-                            Navigator.of(context).pop();
+                            // กู้คืนข้อมูลต้นฉบับเมื่อกดปิดโดยไม่ได้ยืนยัน
+                            nameController.text = originalName;
+                            emailController.text = originalEmail;
+                            phoneController.text = originalPhone;
+                            dateController.text = originalDate;
+                            registrationController.text = originalAddress;
+                            passwordController.text = originalPassword;
+                            compasswordController.text =
+                                originalConfirmPassword;
+                            // คืนค่าภาพเดิม
+                            imageFile = originalImageFile;
+                            url = originalImageUrl;
+                            Navigator.of(context).pop(); // ปิดป๊อปอัพ
                           },
                         ),
                       ],
@@ -102,40 +187,70 @@ class _ProfilePageRiderState extends State<ProfilePageRider>
                       child: SingleChildScrollView(
                         child: Column(
                           children: [
-                            InkWell(
-                              onTap: _pickImage,
-                              child: CircleAvatar(
-                                radius: 60,
-                                backgroundImage: _imageFile != null
-                                    ? FileImage(_imageFile!)
-                                    : (riderService.url.isNotEmpty
-                                        ? NetworkImage(riderService.url)
-                                        : const AssetImage(
-                                                'assets/img/default_profile.png')
-                                            as ImageProvider),
-                              ),
+                            // ปรับ Row เพื่อจัดตำแหน่งรูปภาพและปุ่มให้อยู่ด้านขวาของรูป
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                // รูปภาพโปรไฟล์
+                                CircleAvatar(
+                                  radius: 50,
+                                  backgroundColor: Colors.grey[200],
+                                  child: imageFile != null
+                                      ? ClipOval(
+                                          child: Image.file(
+                                            imageFile!,
+                                            fit: BoxFit.cover,
+                                            width: 100,
+                                            height: 100,
+                                          ),
+                                        )
+                                      : ClipOval(
+                                          child: Image.network(
+                                            url,
+                                            fit: BoxFit.cover,
+                                            width: 100,
+                                            height: 100,
+                                          ),
+                                        ),
+                                ),
+                                const SizedBox(width: 20),
+                                // ปุ่มแก้ไขรูปภาพทางด้านขวาของรูป
+                                ElevatedButton(
+                                  onPressed: () {
+                                    _showImageSourceActionSheet(
+                                        context, setState);
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.green,
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 20, vertical: 10),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(30),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'แก้ไขรูปภาพ',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 15),
                             _buildTextFieldEdit(
-                              label: 'Fullname',
-                              controller: nameController,
-                            ),
+                                label: 'Fullname', controller: nameController),
                             _buildTextFieldEdit(
-                              label: 'Email',
-                              controller: emailController,
-                            ),
+                                label: 'Email', controller: emailController),
                             _buildTextFieldEdit(
-                              label: 'Phone',
-                              controller: phoneController,
-                            ),
+                                label: 'Phone', controller: phoneController),
                             _buildTextFieldEdit(
-                              label: 'Date of birth',
-                              controller: dateController,
-                            ),
+                                label: 'Date of Birth',
+                                controller: dateController),
                             _buildTextFieldEdit(
-                              label: 'Estate & City',
-                              controller: addressController,
-                            ),
+                                label: 'Registration',
+                                controller: registrationController),
                             _buildTextFieldEdit(
                               label: "Password",
                               controller: passwordController,
@@ -146,6 +261,23 @@ class _ProfilePageRiderState extends State<ProfilePageRider>
                                 });
                               },
                             ),
+                            _buildTextFieldEdit(
+                              label: "Confirm Password",
+                              controller: compasswordController,
+                              isPasswordVisible: isConfirmPasswordVisible,
+                              togglePasswordVisibility: () {
+                                setState(() {
+                                  isConfirmPasswordVisible =
+                                      !isConfirmPasswordVisible;
+                                });
+                              },
+                            ),
+                            if (errorMessage.isNotEmpty)
+                              Text(
+                                errorMessage,
+                                style: const TextStyle(
+                                    color: Colors.red, fontSize: 14),
+                              ),
                           ],
                         ),
                       ),
@@ -153,17 +285,102 @@ class _ProfilePageRiderState extends State<ProfilePageRider>
                     const SizedBox(height: 20),
                     ElevatedButton(
                       onPressed: () {
-                        // Update user service
-                        riderService.rider.updateAll((key, value) {
-                          if (key == 'fullname') return nameController.text;
-                          if (key == 'email') return emailController.text;
-                          if (key == 'phone') return phoneController.text;
-                          if (key == 'date') return dateController.text;
-                          if (key == 'address') return addressController.text;
-                          if (key == 'password') return passwordController.text;
-                          return value;
+                        // ปิดคีย์บอร์ด
+                        FocusScope.of(context).unfocus(); // ปิดคีย์บอร์ด
+                        setState(() {
+                          // ตรวจสอบว่าฟิลด์ทั้งหมดถูกกรอกข้อมูลหรือไม่
+                          if (nameController.text.isEmpty) {
+                            errorMessage = 'กรุณากรอกชื่อเต็ม';
+                            // แสดงข้อความแจ้งเตือน
+                            Get.snackbar(
+                              'ข้อผิดพลาด',
+                              'กรุณากรอกชื่อเต็ม',
+                              snackPosition: SnackPosition.BOTTOM,
+                              backgroundColor: Colors.red,
+                              colorText: Colors.white,
+                              duration: const Duration(seconds: 3),
+                            );
+                          } else if (emailController.text.isEmpty ||
+                              !RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+                                  .hasMatch(emailController.text)) {
+                            errorMessage = 'กรุณากรอกอีเมลให้ถูกต้อง';
+                            // แสดงข้อความแจ้งเตือน
+                            Get.snackbar(
+                              'ข้อผิดพลาด',
+                              'กรุณากรอกอีเมลให้ถูกต้อง',
+                              snackPosition: SnackPosition.BOTTOM,
+                              backgroundColor: Colors.red,
+                              colorText: Colors.white,
+                              duration: const Duration(seconds: 3),
+                            );
+                          } else if (phoneController.text.isEmpty ||
+                              phoneController.text.length != 10) {
+                            errorMessage = 'หมายเลขโทรศัพท์ต้องมี 10 หลัก';
+                            // แสดงข้อความแจ้งเตือน
+                            Get.snackbar(
+                              'ข้อผิดพลาด',
+                              'หมายเลขโทรศัพท์ต้องมี 10 หลัก',
+                              snackPosition: SnackPosition.BOTTOM,
+                              backgroundColor: Colors.red,
+                              colorText: Colors.white,
+                              duration: const Duration(seconds: 3),
+                            );
+                          } else if (dateController.text.isEmpty) {
+                            errorMessage = 'กรุณากรอกวันที่เกิด';
+                            // แสดงข้อความแจ้งเตือน
+                            Get.snackbar(
+                              'ข้อผิดพลาด',
+                              'กรุณากรอกวันที่เกิด',
+                              snackPosition: SnackPosition.BOTTOM,
+                              backgroundColor: Colors.red,
+                              colorText: Colors.white,
+                              duration: const Duration(seconds: 3),
+                            );
+                          } else if (registrationController.text.isEmpty) {
+                            errorMessage = 'กรุณากรอกที่อยู่';
+                            // แสดงข้อความแจ้งเตือน
+                            Get.snackbar(
+                              'ข้อผิดพลาด',
+                              'กรุณากรอกที่อยู่',
+                              snackPosition: SnackPosition.BOTTOM,
+                              backgroundColor: Colors.red,
+                              colorText: Colors.white,
+                              duration: const Duration(seconds: 3),
+                            );
+                          } else if (passwordController.text.isEmpty ||
+                              compasswordController.text.isEmpty) {
+                            errorMessage = 'กรุณากรอกรหัสผ่านและยืนยันรหัสผ่าน';
+                            // แสดงข้อความแจ้งเตือน
+                            Get.snackbar(
+                              'ข้อผิดพลาด',
+                              'กรุณากรอกรหัสผ่านและยืนยันรหัสผ่าน',
+                              snackPosition: SnackPosition.BOTTOM,
+                              backgroundColor: Colors.red,
+                              colorText: Colors.white,
+                              duration: const Duration(seconds: 3),
+                            );
+                          } else if (passwordController.text !=
+                              compasswordController.text) {
+                            errorMessage = 'รหัสผ่านไม่ตรงกัน';
+                            // แสดงข้อความแจ้งเตือน
+                            Get.snackbar(
+                              'ข้อผิดพลาด',
+                              'รหัสผ่านไม่ตรงกัน',
+                              snackPosition: SnackPosition.BOTTOM,
+                              backgroundColor: Colors.red,
+                              colorText: Colors.white,
+                              duration: const Duration(seconds: 3),
+                            );
+                          } else {
+                            // ล้างข้อความข้อผิดพลาด
+                            errorMessage =
+                                ''; // หากข้อมูลครบถ้วน ถูกต้อง, ทำการอัปโหลดข้อมูลไปยัง Firebase
+                            uploadUsersToFirebase();
+
+                            // อัปโหลดข้อมูลไปยัง Firebase
+                            // แสดงข้อความแจ้งเตือนการอัปโหลดสำเร็จ
+                          }
                         });
-                        Navigator.of(context).pop();
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green,
@@ -196,6 +413,7 @@ class _ProfilePageRiderState extends State<ProfilePageRider>
     TextEditingController? controller,
     bool isPasswordVisible = false,
     VoidCallback? togglePasswordVisibility,
+    String? errorMessage, // เพิ่ม errorMessage เพื่อใช้แสดงข้อความผิดพลาด
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -210,7 +428,19 @@ class _ProfilePageRiderState extends State<ProfilePageRider>
         const SizedBox(height: 5),
         TextField(
           controller: controller,
-          obscureText: label == "Password" ? !isPasswordVisible : false,
+          obscureText: (label == "Password" || label == "Confirm Password")
+              ? !isPasswordVisible
+              : false,
+          keyboardType: (label == "Phone")
+              ? TextInputType.phone
+              : TextInputType
+                  .text, // Set keyboard type to phone for Phone label
+          inputFormatters: (label == "Phone")
+              ? [
+                  LengthLimitingTextInputFormatter(10),
+                  FilteringTextInputFormatter.digitsOnly
+                ]
+              : [],
           decoration: InputDecoration(
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
@@ -233,7 +463,7 @@ class _ProfilePageRiderState extends State<ProfilePageRider>
                 width: 2.0,
               ),
             ),
-            suffixIcon: label == "Password"
+            suffixIcon: (label == "Password" || label == "Confirm Password")
                 ? IconButton(
                     icon: Icon(
                       isPasswordVisible
@@ -245,7 +475,25 @@ class _ProfilePageRiderState extends State<ProfilePageRider>
                   )
                 : null,
             isDense: true,
+            errorText: errorMessage, // ใช้ errorMessage ถ้ามีข้อผิดพลาด
           ),
+          onTap: (label == "Date of Birth") // เมื่อแตะช่องกรอกวันที่เกิด
+              ? () async {
+                  DateTime? pickedDate = await showDatePicker(
+                    context: context,
+                    initialDate: DateTime.now(),
+                    firstDate: DateTime(1900),
+                    lastDate: DateTime.now(),
+                  );
+
+                  if (pickedDate != null) {
+                    String formattedDate =
+                        "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}";
+                    controller?.text =
+                        formattedDate; // ใช้ controller ที่ส่งมาจากภายนอก
+                  }
+                }
+              : null, // ไม่ทำอะไรหากไม่ใช่วันที่เกิด
         ),
         const SizedBox(height: 15),
       ],
@@ -276,8 +524,9 @@ class _ProfilePageRiderState extends State<ProfilePageRider>
               TextEditingController(
                 text: !isEditable && label == "Password"
                     ? _maskPassword(
-                        riderService.password) // Mask password for view only
-                    : riderService.password, // Show full password in edit mode
+                        passwordController.text) // Mask password for view only
+                    : passwordController
+                        .text, // Show full password in edit mode
               ),
           decoration: InputDecoration(
             border: OutlineInputBorder(
@@ -318,8 +567,8 @@ class _ProfilePageRiderState extends State<ProfilePageRider>
           Align(
             alignment: Alignment.topCenter,
             child: cycletopri(
-              riderService.name,
-              riderService.url,
+              name,
+              url,
             ),
           ),
           Align(
@@ -345,10 +594,10 @@ class _ProfilePageRiderState extends State<ProfilePageRider>
                           children: [
                             CircleAvatar(
                               radius: 60,
-                              backgroundImage: riderService.url.isNotEmpty
-                                  ? NetworkImage(riderService.url)
+                              backgroundImage: url.isNotEmpty
+                                  ? NetworkImage(url)
                                   : const AssetImage(
-                                          'assets/images/default_profile.png')
+                                          'assets/img/default_profile.png')
                                       as ImageProvider,
                             ),
                             const SizedBox(height: 20),
@@ -374,39 +623,33 @@ class _ProfilePageRiderState extends State<ProfilePageRider>
                             // Display user data
                             _buildTextField(
                               label: "Fullname",
-                              controller: TextEditingController(
-                                  text: riderService.name),
+                              controller: nameController,
                               isEditable: false,
                             ),
                             _buildTextField(
                               label: "Email",
-                              controller: TextEditingController(
-                                  text: riderService.email),
+                              controller: emailController,
                               isEditable: false,
                             ),
                             _buildTextField(
                               label: "Phone",
-                              controller: TextEditingController(
-                                  text: riderService.phone),
+                              controller: phoneController,
                               isEditable: false,
                             ),
                             _buildTextField(
                               label: "Date of birth",
-                              controller: TextEditingController(
-                                  text: riderService.date),
+                              controller: dateController,
                               isEditable: false,
                             ),
                             _buildTextField(
-                              label: "Estate & City",
-                              controller: TextEditingController(
-                                  text: riderService.registration),
+                              label: "Registration",
+                              controller: registrationController,
                               isEditable: false,
                             ),
                             // Password field displaying masked password
                             _buildTextField(
                               label: "Password",
-                              controller: TextEditingController(
-                                  text: _maskPassword(riderService.password)),
+                              controller: passwordmaskController,
                               isEditable: false,
                             ),
                             const SizedBox(height: 30),
@@ -442,9 +685,226 @@ class _ProfilePageRiderState extends State<ProfilePageRider>
         ],
       ),
       bottomNavigationBar: CustomBottomNavigationBarRider(
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
+        currentIndex: 1,
+        onTap: (index) {
+          setState(() {
+            if (context.read<AppData>().listener != null) {
+              context.read<AppData>().listener!.cancel();
+              context.read<AppData>().listener = null;
+              log('Stop real Time');
+            }
+          });
+        },
       ),
+    );
+  }
+
+  String dowurl = '';
+  Future<void> uploadUsersToFirebase() async {
+    String riderid = box.read('Riderid');
+    String currentImageUrl =
+        url; // Assuming userService.url has the current image URL
+
+    // แสดงสปินเนอร์เมื่อกดปุ่มยืนยัน
+    showDialog(
+      context: context,
+      barrierDismissible: false, // ไม่ให้ปิดได้เมื่อกดด้านนอก
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10), // ขอบโค้งมน
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20), // ระยะห่างรอบข้อความและสปินเนอร์
+            child: Column(
+              mainAxisSize: MainAxisSize.min, // ปรับขนาดให้พอดีกับเนื้อหา
+              children: [
+                const CircularProgressIndicator(), // สปินเนอร์
+                const SizedBox(
+                    height: 20), // ช่องว่างระหว่างสปินเนอร์กับข้อความ
+                const Text("กำลังอัปโหลดข้อมูลของท่าน..."), // ข้อความที่จะแสดง
+              ],
+            ),
+          ),
+        );
+      },
+    );
+    //    showDialog(
+    //   context: context,
+    //   barrierDismissible: false,
+    //   builder: (BuildContext context) {
+    //     return const Center(
+    //       child: CircularProgressIndicator(),
+    //     );
+    //   },
+    // );
+    try {
+      // ดึงข้อมูลปัจจุบันของผู้ใช้
+      DocumentSnapshot currentUserDoc =
+          await db.collection('Users').doc(riderid).get();
+      Map<String, dynamic> currentUserData =
+          currentUserDoc.data() as Map<String, dynamic>;
+
+      // ตรวจสอบอีเมล
+      if (emailController.text != currentUserData['email']) {
+        QuerySnapshot emailQuery = await db
+            .collection('Users')
+            .where('email', isEqualTo: emailController.text)
+            .get();
+
+        if (emailQuery.docs.isNotEmpty) {
+          Navigator.of(context).pop(); // ปิดหน้าต่างโหลด
+          Get.snackbar('ข้อผิดพลาด', 'อีเมลนี้ถูกใช้งานแล้ว กรุณาใช้อีเมลอื่น',
+              snackPosition: SnackPosition.BOTTOM,
+              backgroundColor: Colors.red,
+              colorText: Colors.white);
+          return;
+        }
+      }
+
+      // ตรวจสอบเบอร์โทรศัพท์
+      if (phoneController.text != currentUserData['phone']) {
+        QuerySnapshot phoneQuery = await db
+            .collection('Users')
+            .where('phone', isEqualTo: phoneController.text)
+            .get();
+
+        if (phoneQuery.docs.isNotEmpty) {
+          Navigator.of(context).pop(); // ปิดหน้าต่างโหลด
+          Get.snackbar(
+              'ข้อผิดพลาด', 'เบอร์โทรศัพท์นี้ถูกใช้งานแล้ว กรุณาใช้เบอร์อื่น',
+              snackPosition: SnackPosition.BOTTOM,
+              backgroundColor: Colors.red,
+              colorText: Colors.white);
+          return;
+        }
+      }
+
+      // ดำเนินการอัปเดตข้อมูลต่อไป...
+    } catch (e) {
+      log('Error checking for duplicates: $e');
+      Navigator.of(context).pop(); // ปิดหน้าต่างโหลด
+      Get.snackbar(
+          'ข้อผิดพลาด', 'เกิดข้อผิดพลาดในการตรวจสอบข้อมูล กรุณาลองใหม่อีกครั้ง',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white);
+      return;
+    }
+    if (imageFile != null) {
+      setState(() {
+        isUploading = true; // เริ่มการอัปโหลด
+      });
+      try {
+        if (currentImageUrl.isNotEmpty) {
+          Reference storageReference =
+              FirebaseStorage.instance.refFromURL(currentImageUrl);
+          await storageReference.delete();
+          log('Existing image deleted: $currentImageUrl');
+        }
+        String fileName = 'images/${const Uuid().v4()}.jpg';
+        Reference storageReference =
+            FirebaseStorage.instance.ref().child(fileName);
+        UploadTask uploadTask = storageReference.putFile(imageFile!);
+
+        await uploadTask.whenComplete(() async {
+          String downloadURL = await storageReference.getDownloadURL();
+
+          log('ไม่ null');
+
+          Map<String, dynamic> userData = {
+            'fullname': nameController.text,
+            'email': emailController.text,
+            'phone': phoneController.text,
+            'date': dateController.text,
+            'registration': registrationController.text,
+            'password': passwordController.text,
+            'img': downloadURL, // เพิ่ม URL ของภาพที่อัปโหลด
+          };
+          await db.collection('Users').doc(riderid).update(userData);
+          dowurl = downloadURL;
+        });
+      } catch (e) {
+        log('Error uploading image: $e');
+      } finally {
+        setState(() {
+          riderService.updateRiderData(
+            fullname: nameController.text,
+            imgUrl: dowurl, // อัปเดตด้วย URL ของภาพ
+          );
+          isUploading = false; // อัปโหลดเสร็จแล้ว
+        });
+        Navigator.of(context).pop(); // ปิดสปินเนอร์เมื่อเสร็จสิ้น
+        Get.back(); // ปิดป็อปอัพแก้ไขโปรไฟล์
+        Get.snackbar('สำเร็จ', 'แก้ไขข้อมูลสำเร็จ',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.green,
+            colorText: Colors.white);
+      }
+    } else {
+      setState(() {
+        isUploading = true; // เริ่มการอัปโหลด
+      });
+      Map<String, dynamic> userData = {
+        'fullname': nameController.text,
+        'email': emailController.text,
+        'phone': phoneController.text,
+        'date': dateController.text,
+        'registration': registrationController.text,
+        'password': passwordController.text,
+      };
+      await db.collection('Users').doc(riderid).update(userData);
+      riderService.updateRiderData(
+        fullname: nameController.text,
+        imgUrl: url, // อัปเดตด้วย URL ของภาพ
+      );
+
+      setState(() {
+        isUploading = false; // เสร็จสิ้นการอัปโหลด
+      });
+      Navigator.of(context).pop(); // ปิดสปินเนอร์เมื่อเสร็จสิ้น
+      Get.back(); // ปิดป็อปอัพแก้ไขโปรไฟล์
+      // เพิ่มข้อความแจ้งเตือนเมื่อสำเร็จ
+      Get.snackbar('สำเร็จ', 'แก้ไขข้อมูลสำเร็จ',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green,
+          colorText: Colors.white);
+    }
+  }
+
+  void startRealtimeGet() {
+    String riderid = box.read('Riderid');
+    final collectionRef = db.collection('Users').doc(riderid);
+    if (context.read<AppData>().listener != null) {
+      context.read<AppData>().listener!.cancel();
+      context.read<AppData>().listener = null;
+    }
+    context.read<AppData>().listener = collectionRef.snapshots().listen(
+      (documentSnapshot) {
+        if (documentSnapshot.exists) {
+          var data = documentSnapshot.data();
+
+          // Use setState to update UI
+          setState(() {
+            nameController.text = data!['fullname'].toString();
+            emailController.text = data['email'].toString();
+            phoneController.text = data['phone'].toString();
+            dateController.text = data['date'].toString();
+            registrationController.text = data['registration'].toString();
+            passwordmaskController.text = _maskPassword(
+                data['password'].toString()); // Mask the password here
+            compasswordController.text = data['password'].toString();
+            name = data['fullname'].toString();
+            passwordController.text = data['password'].toString();
+            url = data['img'].toString(); // Update the URL if needed
+          });
+
+          log('Start Real Time'); // You can log the name here
+        } else {
+          log("Document does not exist");
+        }
+      },
+      onError: (error) => log("Listen failed: $error"),
     );
   }
 

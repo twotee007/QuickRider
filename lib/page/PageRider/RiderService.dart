@@ -36,12 +36,24 @@ class RiderService extends GetxController {
     }
   }
 
+  Future<void> updateRiderData({
+    required String fullname,
+    required String imgUrl, // Optional image URL
+  }) async {
+    try {
+      // อัปเดตข้อมูลใน local `user`
+      rider.updateAll((key, value) {
+        if (key == 'fullname') return fullname;
+        if (key == 'img') return imgUrl; // Update the image URL if it exists
+        return value;
+      });
+
+      print('User data updated successfully in Firestore');
+    } catch (e) {
+      print('Error updating user data: $e');
+    }
+  }
+
   String get name => rider['fullname'] ?? 'ไม่มีชื่อ';
   String get url => rider['img'] ?? '';
-  String get email => rider['email'] ?? '';
-  String get phone => rider['phone'] ?? '';
-  String get date => rider['date'] ?? '';
-  // String get addresscurrentJob => rider['currentJob'] ?? '';
-  String get password => rider['password'] ?? '';
-  String get registration => rider['registration'] ?? '';
 }

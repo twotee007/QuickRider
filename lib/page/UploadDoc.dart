@@ -53,6 +53,8 @@ class _UploadDocumentsPageState extends State<UploadDocumentsPage> {
       longitude = context.read<AppData>().longitude;
     } else {
       registration = context.read<AppData>().registration;
+      latitude = context.read<AppData>().latitude;
+      longitude = context.read<AppData>().longitude;
     }
   }
 
@@ -277,7 +279,8 @@ class _UploadDocumentsPageState extends State<UploadDocumentsPage> {
             });
           } else {
             userData.addAll({
-              'currentJob': '',
+              'currentJob': '0',
+              'gpsLocation': {'latitude': latitude, 'longitude': longitude},
               'registration': registration,
             });
           }
