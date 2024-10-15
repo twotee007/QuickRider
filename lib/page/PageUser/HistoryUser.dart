@@ -73,8 +73,8 @@ class _HistoryPageUserState extends State<HistoryPageUser>
                             indicatorColor:
                                 const Color.fromARGB(255, 127, 86, 166),
                             tabs: const [
-                              Tab(text: 'ประวัติสินค้าที่คุณส่ง'),
-                              Tab(text: 'ประวัติสินค้าที่คุณได้รับ'),
+                              Tab(text: 'สินค้าที่คุณส่ง'),
+                              Tab(text: 'สินค้าที่คุณได้รับ'),
                             ],
                           ),
                           Expanded(
@@ -106,11 +106,7 @@ class _HistoryPageUserState extends State<HistoryPageUser>
   Widget _buildSentItems() {
     return SingleChildScrollView(
       child: Column(
-        children: [
-          const SizedBox(height: 10),
-          _orderRider('อัครผล', 'วู้ดดี้ จิน'),
-          _orderRider('อัครผล', 'วู้ดดี้ จิน'),
-        ],
+        children: [Text('ตำแหน่ง Rider สินค้าที่คุณส่ง')],
       ),
     );
   }
@@ -118,11 +114,7 @@ class _HistoryPageUserState extends State<HistoryPageUser>
   Widget _buildReceivedItems() {
     return SingleChildScrollView(
       child: Column(
-        children: [
-          const SizedBox(height: 10),
-          _orderRider('วู้ดดี้ จิน', 'อัครผล'),
-          _orderRider('วู้ดดี้ จิน', 'อัครผล'),
-        ],
+        children: [Text('ตำแหน่ง Rider สินค้าที่คุณได้รับ')],
       ),
     );
   }

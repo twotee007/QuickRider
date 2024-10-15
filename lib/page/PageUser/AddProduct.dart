@@ -2,14 +2,17 @@ import 'dart:developer';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 
 import 'package:image_picker/image_picker.dart';
+import 'package:quickrider/page/PageUser/HomeUser.dart';
 import 'package:quickrider/page/PageUser/SharedWidget.dart';
 import 'package:quickrider/page/PageUser/UserService.dart';
+import 'package:uuid/uuid.dart';
 
 class AddProductPage extends StatefulWidget {
   const AddProductPage({super.key});
@@ -650,21 +653,164 @@ class _AddProductPageState extends State<AddProductPage> {
     return spans;
   }
 
-  void _submitData() {
-    for (var product in _productControllers) {
-      String productName = product['productName']?.text ?? '';
-      String productQuantity = product['productQuantity']?.text ?? '';
-      String productDetails = product['productDetails']?.text ?? '';
-      File? image = product['image'];
+  void _submitData() async {
+    // แสดงป็อปอัพตัวหมุน
+    Get.dialog(
+      Center(
+        child: Card(
+          elevation: 8, // ความสูงของเงา
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15), // มุมโค้ง
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24), // ระยะห่างภายใน
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                      Theme.of(context).primaryColor), // เปลี่ยนสีตัวหมุนตามธีม
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  "กรุณารอสักครู่ ระบบกำลังเพิ่มสินค้าให้ท่าน",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87, // เปลี่ยนสีข้อความ
+                  ),
+                  textAlign: TextAlign.center, // จัดกึ่งกลางข้อความ
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      barrierDismissible: false, // ไม่ให้ปิดป็อปอัพโดยการกดข้างนอก
+    );
 
-      // Print or process the product information
-      log('ชื่อสินค้า: $productName');
-      log('จำนวนสินค้า: $productQuantity');
-      log('รายละเอียดสินค้า: $productDetails');
-      log('เบอร์โทรศัพท์: ${_phoneController.text}');
-      log('ที่อยู่:${_shippingAddressController.text}');
-      log('รูปภาพ: ${image?.path}');
-      log('-------------------------');
+    String senderId = box.read('Userid'); // อ่าน senderId จาก local storage
+
+    try {
+      DocumentSnapshot senderData = await FirebaseFirestore.instance
+          .collection('Users') // คอลเลกชันผู้ใช้
+          .doc(senderId) // ใช้ senderId เพื่อดึงข้อมูล
+          .get();
+
+      if (senderData.exists) {
+        Map<String, dynamic>? senderInfo =
+            senderData.data() as Map<String, dynamic>?;
+        var senderGeolocation =
+            senderInfo?['gpsLocation']; // ดึง geolocation ของผู้ส่ง
+        var senderAddress = senderInfo?['address']; // ดึง address ของผู้ส่ง
+
+        log('Sender Geolocation: $senderGeolocation');
+        log('Sender Address: $senderAddress');
+
+        for (var product in _productControllers) {
+          String productName = product['productName']?.text ?? '';
+          String productQuantity = product['productQuantity']?.text ?? '';
+          String productDetails = product['productDetails']?.text ?? '';
+          File? image = product['image'];
+          String phoneNumber = _phoneController.text;
+
+          try {
+            QuerySnapshot querySnapshotReceiver = await FirebaseFirestore
+                .instance
+                .collection('Users')
+                .where('phone', isEqualTo: phoneNumber)
+                .get();
+
+            if (querySnapshotReceiver.docs.isNotEmpty) {
+              String receiverId = querySnapshotReceiver.docs.first.id;
+              log('Receiver ID: $receiverId');
+
+              DocumentSnapshot receiverData = await FirebaseFirestore.instance
+                  .collection('Users')
+                  .doc(receiverId)
+                  .get();
+
+              if (receiverData.exists) {
+                Map<String, dynamic>? receiverInfo =
+                    receiverData.data() as Map<String, dynamic>?;
+                var receiverGeolocation = receiverInfo?['gpsLocation'];
+                var receiverAddress = receiverInfo?['address'];
+
+                try {
+                  String? imageUrl;
+                  if (image != null) {
+                    String fileName = '${const Uuid().v4()}.jpg';
+                    Reference storageRef = FirebaseStorage.instance
+                        .ref()
+                        .child('order_images/$fileName');
+
+                    UploadTask uploadTask = storageRef.putFile(image);
+                    TaskSnapshot snapshot =
+                        await uploadTask.whenComplete(() {});
+                    imageUrl = await snapshot.ref.getDownloadURL();
+                    log('อัพโหลดรูปภาพสำเร็จ: $imageUrl');
+                  }
+
+                  DocumentReference orderRef = await FirebaseFirestore.instance
+                      .collection('orders')
+                      .add({
+                    'senderId': senderId,
+                    'receiverId': receiverId,
+                    'status': '1',
+                    'Photopickup': null,
+                    'senderPhoto': null,
+                    'deliveredPhoto': null,
+                    'riderId': '',
+                    'pickupAddress': senderAddress,
+                    'pickupLocation': senderGeolocation,
+                    'deliveryAddress': receiverAddress,
+                    'deliveryLocation': receiverGeolocation,
+                    'createdAt': FieldValue.serverTimestamp(),
+                    'updatedAt': FieldValue.serverTimestamp(),
+                  });
+
+                  String orderId = orderRef.id;
+                  log('บันทึกคำสั่งซื้อสำเร็จ, Order ID: $orderId');
+
+                  DocumentReference orderItemsRef = await FirebaseFirestore
+                      .instance
+                      .collection('orderItems')
+                      .add({
+                    'orderId': orderId,
+                    'Photos': imageUrl ?? '',
+                    'name': productName,
+                    'description': productDetails,
+                    'quantity': int.tryParse(productQuantity) ?? 1,
+                  });
+
+                  log('บันทึก orderItems สำเร็จ, Order Item ID: ${orderItemsRef.id}');
+                } catch (e) {
+                  log('เกิดข้อผิดพลาดในการบันทึกคำสั่งซื้อหรือ orderItems: $e');
+                }
+              }
+            } else {
+              log('ไม่พบผู้ใช้ที่มีหมายเลขโทรศัพท์: $phoneNumber');
+            }
+          } catch (e) {
+            log('เกิดข้อผิดพลาดในการค้นหา receiverId หรือ geolocation: $e');
+          }
+
+          log('ชื่อสินค้า: $productName');
+          log('จำนวนสินค้า: $productQuantity');
+          log('รายละเอียดสินค้า: $productDetails');
+          log('เบอร์โทรศัพท์: $phoneNumber');
+          log('ที่อยู่: ${_shippingAddressController.text}');
+          log('รูปภาพ: ${image?.path}');
+        }
+        Get.back(); // ปิดป็อปอัพหลังจากการทำงานเสร็จ
+        Get.to(() => const HomeUserpage(),
+            transition: Transition.rightToLeftWithFade,
+            duration: const Duration(milliseconds: 300));
+      } else {
+        log('ไม่พบข้อมูลผู้ใช้ที่มี Sender ID: $senderId');
+      }
+    } catch (e) {
+      log('เกิดข้อผิดพลาดในการดึงข้อมูล sender: $e');
     }
   }
 }
