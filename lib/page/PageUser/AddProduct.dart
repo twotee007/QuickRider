@@ -733,6 +733,11 @@ class _AddProductPageState extends State<AddProductPage> {
               if (receiverData.exists) {
                 Map<String, dynamic>? receiverInfo =
                     receiverData.data() as Map<String, dynamic>?;
+
+                // ดึงชื่อผู้รับ
+                String receiverName = receiverInfo?['fullname'] ?? 'ไม่ระบุ';
+                log('Receiver Name: $receiverName');
+
                 var receiverGeolocation = receiverInfo?['gpsLocation'];
                 var receiverAddress = receiverInfo?['address'];
 
@@ -767,6 +772,7 @@ class _AddProductPageState extends State<AddProductPage> {
                     'deliveryLocation': receiverGeolocation,
                     'createdAt': FieldValue.serverTimestamp(),
                     'updatedAt': FieldValue.serverTimestamp(),
+                    'type': 'sender', // กำหนด type เป็น sender
                   });
 
                   String orderId = orderRef.id;
@@ -781,6 +787,8 @@ class _AddProductPageState extends State<AddProductPage> {
                     'name': productName,
                     'description': productDetails,
                     'quantity': int.tryParse(productQuantity) ?? 1,
+                    'receiverName': receiverName,
+                    'type': 'receiver', // กำหนด type เป็น receiver
                   });
 
                   log('บันทึก orderItems สำเร็จ, Order Item ID: ${orderItemsRef.id}');

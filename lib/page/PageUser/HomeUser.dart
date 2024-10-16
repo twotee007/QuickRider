@@ -9,6 +9,7 @@ import 'package:quickrider/page/PageUser/AddProduct.dart';
 import 'package:quickrider/page/PageUser/DeliveryStatus.dart';
 import 'package:quickrider/page/PageUser/SharedWidget.dart';
 import 'package:quickrider/page/PageUser/UserService.dart';
+import 'package:uuid/uuid.dart';
 
 class HomeUserpage extends StatefulWidget {
   const HomeUserpage({super.key});
@@ -22,6 +23,7 @@ class _HomeUserpageState extends State<HomeUserpage>
   late Map<String, dynamic>? user;
   int _selectedIndex = 0;
   final userService = Get.find<UserService>();
+
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -30,9 +32,7 @@ class _HomeUserpageState extends State<HomeUserpage>
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
-    final userService = Get.put(UserService());
     userService.loadUserData();
   }
 
@@ -49,18 +49,17 @@ class _HomeUserpageState extends State<HomeUserpage>
               duration: const Duration(milliseconds: 300));
         },
         shape: const CircleBorder(),
-        elevation: 0, // ลดการยกของปุ่ม
-        fillColor: Colors.transparent, // ทำให้พื้นหลังโปร่งใส
+        elevation: 0,
+        fillColor: Colors.transparent,
         child: Container(
           decoration: const BoxDecoration(
             shape: BoxShape.circle,
             image: DecorationImage(
-              image: AssetImage(
-                  'assets/img/Plus.png'), // เปลี่ยนเป็น path ของไฟล์รูปภาพที่ใช้
+              image: AssetImage('assets/img/Plus.png'),
               fit: BoxFit.cover,
             ),
           ),
-          width: 60, // กำหนดขนาดที่เหมาะสม
+          width: 60,
           height: 60,
         ),
       ),
@@ -70,8 +69,8 @@ class _HomeUserpageState extends State<HomeUserpage>
           Align(
             alignment: Alignment.topCenter,
             child: cycletop(
-              userService.name, // ใช้ข้อมูลชื่อจาก UserService
-              userService.url, // ใช้ข้อมูล URL จาก UserService
+              userService.name,
+              userService.url,
             ),
           ),
           Align(
@@ -140,6 +139,31 @@ class _HomeUserpageState extends State<HomeUserpage>
     );
   }
 
+  // Widget _buildSentItems() {
+  //   return StreamBuilder<QuerySnapshot>(
+  //     stream: FirebaseFirestore.instance
+  //         .collection('orderItems')
+  //         .where('sender',
+  //             isEqualTo: userService.name) // ดึงสินค้าที่ส่งจากผู้ใช้
+  //         .snapshots(),
+  //     builder: (context, snapshot) {
+  //       if (snapshot.connectionState == ConnectionState.waiting) {
+  //         return const Center(child: CircularProgressIndicator());
+  //       }
+  //       if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+  //         return const Center(child: Text('ไม่มีสินค้าที่คุณส่ง'));
+  //       }
+  //       var items = snapshot.data!.docs;
+  //       return ListView.builder(
+  //         itemCount: items.length,
+  //         itemBuilder: (context, index) {
+  //           var data = items[index].data() as Map<String, dynamic>;
+  //           return _orderRider(data['sender'], data['receiver']);
+  //         },
+  //       );
+  //     },
+  //   );
+  // }
   Widget _buildReceivedItems() {
     return SingleChildScrollView(
       child: Column(
@@ -151,8 +175,33 @@ class _HomeUserpageState extends State<HomeUserpage>
       ),
     );
   }
+  // Widget _buildReceivedItems() {
+  //   return StreamBuilder<QuerySnapshot>(
+  //     stream: FirebaseFirestore.instance
+  //         .collection('orderItems')
+  //         .where('receiver',
+  //             isEqualTo: userService.name) // ดึงสินค้าที่รับจากผู้ใช้
+  //         .snapshots(),
+  //     builder: (context, snapshot) {
+  //       if (snapshot.connectionState == ConnectionState.waiting) {
+  //         return const Center(child: CircularProgressIndicator());
+  //       }
+  //       if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+  //         return const Center(child: Text('ไม่มีสินค้าที่คุณรับ'));
+  //       }
+  //       var items = snapshot.data!.docs;
+  //       return ListView.builder(
+  //         itemCount: items.length,
+  //         itemBuilder: (context, index) {
+  //           var data = items[index].data() as Map<String, dynamic>;
+  //           return _orderRider(data['sender'], data['receiver']);
+  //         },
+  //       );
+  //     },
+  //   );
+  // }
 
-  Widget _orderRider(String namesender, String namereceiver) {
+  Widget _orderRider(String senderName, String receiverName) {
     return Column(
       children: [
         Stack(
@@ -175,7 +224,7 @@ class _HomeUserpageState extends State<HomeUserpage>
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          'ผู้จัดส่ง : $namesender',
+                          'ผู้จัดส่ง : $senderName',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,
@@ -184,7 +233,7 @@ class _HomeUserpageState extends State<HomeUserpage>
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'ส่งให้คุณ : $namereceiver',
+                          'ส่งให้คุณ : $receiverName',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 14,
@@ -197,9 +246,7 @@ class _HomeUserpageState extends State<HomeUserpage>
                         Get.to(
                           () => DeliveryStatusScreen(),
                           transition: Transition.cupertino,
-                          duration: Duration(
-                              milliseconds:
-                                  300), // ระยะเวลาที่ใช้ในการเปลี่ยนหน้า
+                          duration: const Duration(milliseconds: 300),
                         );
                       },
                       style: ElevatedButton.styleFrom(
@@ -228,27 +275,4 @@ class _HomeUserpageState extends State<HomeUserpage>
       ],
     );
   }
-
-  // Future<void> loadDataAstnc() async {
-  //   String userid = box.read('Userid');
-  //   try {
-  //     // เข้าถึงเอกสารโดยใช้ Document ID
-  //     var docSnapshot = await db.collection('Users').doc(userid).get();
-
-  //     if (docSnapshot.exists) {
-  //       log('Document ID: ${docSnapshot.id}'); // แสดง ID ของเอกสาร
-
-  //       // เก็บข้อมูลใน Map
-  //       user = docSnapshot.data() as Map<String, dynamic>?;
-  //       log('Data: $user'); // แสดงข้อมูลทั้งหมด
-
-  //       // อัปเดต UI เมื่อโหลดข้อมูลเสร็จ
-  //       setState(() {}); // เรียกใช้ setState เพื่อให้ UI อัปเดต
-  //     } else {
-  //       log('No user found with docId: ${docSnapshot.id}');
-  //     }
-  //   } catch (e) {
-  //     log('Error fetching user: $e');
-  //   }
-  // }
 }
