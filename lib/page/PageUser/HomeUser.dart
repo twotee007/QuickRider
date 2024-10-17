@@ -20,6 +20,7 @@ class HomeUserpage extends StatefulWidget {
 
 class _HomeUserpageState extends State<HomeUserpage>
     with TickerProviderStateMixin {
+  final box = GetStorage();
   late Map<String, dynamic>? user;
   int _selectedIndex = 0;
   final userService = Get.find<UserService>();
@@ -128,82 +129,109 @@ class _HomeUserpageState extends State<HomeUserpage>
   }
 
   Widget _buildSentItems() {
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          const SizedBox(height: 10),
-          _orderRider('อัครผล', 'วู้ดดี้ จิน'),
-          _orderRider('อัครผล', 'วู้ดดี้ จิน'),
-        ],
-      ),
+    String userId = box.read('Userid');
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('orders')
+          .where('senderId', isEqualTo: userId) // ปรับให้ตรงกับ userId ของคุณ
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final orders = snapshot.data!.docs;
+
+        if (orders.isEmpty) {
+          return const Center(child: Text('คุณยังไม่มีการส่งสินค้า'));
+        }
+
+        return ListView.builder(
+          itemCount: orders.length,
+          itemBuilder: (context, index) {
+            final order = orders[index];
+            final receiverId = order['receiverId'];
+
+            // ดึงชื่อผู้รับจาก Firestore ตาม receiverId
+            return FutureBuilder<DocumentSnapshot>(
+              future: FirebaseFirestore.instance
+                  .collection('Users') // สมมติว่าชื่อ collection คือ 'users'
+                  .doc(receiverId)
+                  .get(),
+              builder: (context, receiverSnapshot) {
+                if (!receiverSnapshot.hasData) {
+                  return const SizedBox(); // หรือสามารถแสดง CircularProgressIndicator()
+                }
+
+                final receiverData = receiverSnapshot.data!;
+                final receiverName =
+                    receiverData['fullname']; // หรือ field ที่คุณใช้เก็บชื่อ
+
+                return _orderRider(
+                    userService.name, receiverName); // แสดงชื่อผู้ส่งและผู้รับ
+              },
+            );
+          },
+        );
+      },
     );
   }
 
-  // Widget _buildSentItems() {
-  //   return StreamBuilder<QuerySnapshot>(
-  //     stream: FirebaseFirestore.instance
-  //         .collection('orderItems')
-  //         .where('sender',
-  //             isEqualTo: userService.name) // ดึงสินค้าที่ส่งจากผู้ใช้
-  //         .snapshots(),
-  //     builder: (context, snapshot) {
-  //       if (snapshot.connectionState == ConnectionState.waiting) {
-  //         return const Center(child: CircularProgressIndicator());
-  //       }
-  //       if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-  //         return const Center(child: Text('ไม่มีสินค้าที่คุณส่ง'));
-  //       }
-  //       var items = snapshot.data!.docs;
-  //       return ListView.builder(
-  //         itemCount: items.length,
-  //         itemBuilder: (context, index) {
-  //           var data = items[index].data() as Map<String, dynamic>;
-  //           return _orderRider(data['sender'], data['receiver']);
-  //         },
-  //       );
-  //     },
-  //   );
-  // }
   Widget _buildReceivedItems() {
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          const SizedBox(height: 10),
-          _orderRider('วู้ดดี้ จิน', 'อัครผล'),
-          _orderRider('วู้ดดี้ จิน', 'อัครผล'),
-        ],
-      ),
+    String userId = box.read('Userid');
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('orders')
+          .where('receiverId', isEqualTo: userId) // ปรับให้ตรงกับ userId ของคุณ
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final orders = snapshot.data!.docs;
+
+        if (orders.isEmpty) {
+          return const Center(child: Text('คุณยังไม่มีการรับสินค้า'));
+        }
+
+        return ListView.builder(
+          itemCount: orders.length,
+          itemBuilder: (context, index) {
+            final order = orders[index];
+            final senderId = order['senderId'];
+
+            // ดึงชื่อผู้ส่งจาก Firestore ตาม senderId
+            return FutureBuilder<DocumentSnapshot>(
+              future: FirebaseFirestore.instance
+                  .collection('Users') // สมมติว่าชื่อ collection คือ 'users'
+                  .doc(senderId)
+                  .get(),
+              builder: (context, senderSnapshot) {
+                if (!senderSnapshot.hasData) {
+                  return const SizedBox(); // หรือสามารถแสดง CircularProgressIndicator()
+                }
+
+                final senderData = senderSnapshot.data!;
+                final senderName =
+                    senderData['fullname']; // หรือ field ที่คุณใช้เก็บชื่อ
+                log(senderName);
+                return _orderRider(
+                    senderName, userService.name); // แสดงชื่อผู้ส่งและผู้รับ
+              },
+            );
+          },
+        );
+      },
     );
   }
-  // Widget _buildReceivedItems() {
-  //   return StreamBuilder<QuerySnapshot>(
-  //     stream: FirebaseFirestore.instance
-  //         .collection('orderItems')
-  //         .where('receiver',
-  //             isEqualTo: userService.name) // ดึงสินค้าที่รับจากผู้ใช้
-  //         .snapshots(),
-  //     builder: (context, snapshot) {
-  //       if (snapshot.connectionState == ConnectionState.waiting) {
-  //         return const Center(child: CircularProgressIndicator());
-  //       }
-  //       if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-  //         return const Center(child: Text('ไม่มีสินค้าที่คุณรับ'));
-  //       }
-  //       var items = snapshot.data!.docs;
-  //       return ListView.builder(
-  //         itemCount: items.length,
-  //         itemBuilder: (context, index) {
-  //           var data = items[index].data() as Map<String, dynamic>;
-  //           return _orderRider(data['sender'], data['receiver']);
-  //         },
-  //       );
-  //     },
-  //   );
-  // }
 
   Widget _orderRider(String senderName, String receiverName) {
     return Column(
       children: [
+        // เพิ่ม SizedBox ด้านบนเพื่อให้ขยับขึ้น
+        // เปลี่ยนจาก 10 เป็น 0 หรือค่าที่ต้องการ
+
         Stack(
           children: [
             Container(
@@ -271,7 +299,7 @@ class _HomeUserpageState extends State<HomeUserpage>
             ),
           ],
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 10), // ระยะห่างด้านล่าง
       ],
     );
   }

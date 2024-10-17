@@ -30,7 +30,7 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
   final ImagePicker picker = ImagePicker();
   File? imageFile; // ตัวแปรสำหรับเก็บไฟล์รูปภาพที่เลือก
   bool isUploading = false; // ตัวแปรสำหรับการตรวจสอบสถานะการอัปโหลด
-  late Map<String, dynamic>? user;
+
   final FirebaseFirestore db = FirebaseFirestore.instance;
   StreamSubscription? listener;
   // Function to mask the password

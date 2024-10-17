@@ -210,11 +210,11 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
   Widget _buildTopHeader() {
     return Container(
       width: 390,
-      height: 100,
+      height: 80,
       padding: const EdgeInsets.symmetric(vertical: 20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             color: Colors.grey.withOpacity(0.3),
@@ -226,7 +226,7 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
       ),
       margin: const EdgeInsets.only(top: 50),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(5.0),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
