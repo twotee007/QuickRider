@@ -151,6 +151,7 @@ class _HomeUserpageState extends State<HomeUserpage>
           itemBuilder: (context, index) {
             final order = orders[index];
             final receiverId = order['receiverId'];
+            final orderId = order.id; // ดึง orderId
 
             // ดึงชื่อผู้รับจาก Firestore ตาม receiverId
             return FutureBuilder<DocumentSnapshot>(
@@ -167,8 +168,8 @@ class _HomeUserpageState extends State<HomeUserpage>
                 final receiverName =
                     receiverData['fullname']; // หรือ field ที่คุณใช้เก็บชื่อ
 
-                return _orderRider(
-                    userService.name, receiverName); // แสดงชื่อผู้ส่งและผู้รับ
+                return _orderRider(userService.name, receiverName,
+                    orderId); // ส่ง orderId ไปด้วย
               },
             );
           },
@@ -200,6 +201,7 @@ class _HomeUserpageState extends State<HomeUserpage>
           itemBuilder: (context, index) {
             final order = orders[index];
             final senderId = order['senderId'];
+            final orderId = order.id; // ดึง orderId
 
             // ดึงชื่อผู้ส่งจาก Firestore ตาม senderId
             return FutureBuilder<DocumentSnapshot>(
@@ -216,8 +218,8 @@ class _HomeUserpageState extends State<HomeUserpage>
                 final senderName =
                     senderData['fullname']; // หรือ field ที่คุณใช้เก็บชื่อ
                 log(senderName);
-                return _orderRider(
-                    senderName, userService.name); // แสดงชื่อผู้ส่งและผู้รับ
+                return _orderRider(senderName, userService.name,
+                    orderId); // ส่ง orderId ไปด้วย
               },
             );
           },
@@ -226,7 +228,7 @@ class _HomeUserpageState extends State<HomeUserpage>
     );
   }
 
-  Widget _orderRider(String senderName, String receiverName) {
+  Widget _orderRider(String senderName, String receiverName, String orderId) {
     return Column(
       children: [
         // เพิ่ม SizedBox ด้านบนเพื่อให้ขยับขึ้น
@@ -273,6 +275,9 @@ class _HomeUserpageState extends State<HomeUserpage>
                       onPressed: () {
                         Get.to(
                           () => DeliveryStatusScreen(),
+                          arguments: {
+                            'orderId': orderId,
+                          },
                           transition: Transition.cupertino,
                           duration: const Duration(milliseconds: 300),
                         );
