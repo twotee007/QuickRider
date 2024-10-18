@@ -56,4 +56,8 @@ class RiderService extends GetxController {
 
   String get name => rider['fullname'] ?? 'ไม่มีชื่อ';
   String get url => rider['img'] ?? '';
+  Map<String, double> get gpsLocation => {
+        'latitude': rider['gpsLocation']?['latitude'] ?? 0.0,
+        'longitude': rider['gpsLocation']?['longitude'] ?? 0.0,
+      };
 }

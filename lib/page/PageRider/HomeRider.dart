@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import 'package:quickrider/config/shared/appData.dart';
 import 'package:quickrider/page/PageRider/JobdscriptionRider.dart';
 import 'package:quickrider/page/PageRider/RiderService.dart';
 import 'package:quickrider/page/PageRider/widgetRider.dart';
@@ -20,6 +22,8 @@ class _HomeRiderPageState extends State<HomeRiderPage>
     with TickerProviderStateMixin {
   late Map<String, dynamic>? rider;
   int _selectedIndex = 0;
+  List<Map<String, dynamic>> ordersList = [];
+  bool isLoading = true; // ตัวแปรสำหรับสถานะการโหลด
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -33,6 +37,7 @@ class _HomeRiderPageState extends State<HomeRiderPage>
     super.initState();
     final riderService = Get.put(RiderService());
     riderService.loadUserData();
+    startRealtimeGetOrders();
   }
 
   @override
@@ -97,7 +102,7 @@ class _HomeRiderPageState extends State<HomeRiderPage>
                           ),
                         ),
                       ),
-                      const SizedBox(height: 20),
+
                       _buildSentItems(), // เรียกฟังก์ชันแสดงออเดอร์
                     ],
                   ),
@@ -108,29 +113,65 @@ class _HomeRiderPageState extends State<HomeRiderPage>
         ],
       ),
       bottomNavigationBar: CustomBottomNavigationBarRider(
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
+        currentIndex: 0,
+        onTap: (index) {
+          setState(() {
+            if (context.read<AppData>().listener != null) {
+              context.read<AppData>().listener!.cancel();
+              context.read<AppData>().listener = null;
+              log('Stop real Time');
+            }
+          });
+        },
       ),
     );
   }
 
   Widget _buildSentItems() {
-    return Column(
-      children: [
-        const SizedBox(height: 10),
-        _orderRider('อัครผล', 'วู้ดดี้ จิน'),
-      ],
+    if (isLoading) {
+      // แสดง CircularProgressIndicator ถ้ากำลังโหลดข้อมูล
+      return Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          const SizedBox(height: 10),
+          ...ordersList.map((order) {
+            String senderName = order['senderName'] ?? 'Unknown Sender';
+            String receiverName = order['receiverName'] ?? 'Unknown Receiver';
+            String orderId = order['orderId'] ?? 'Unknown orderId';
+            String senderId = order['senderId'] ?? 'Unknown senderId';
+            String receiverId = order['receiverId'] ?? 'Unknown receiverId';
+            return _orderRider(
+                senderName, receiverName, orderId, senderId, receiverId);
+          }).toList(),
+        ],
+      ),
     );
   }
 
-  Widget _orderRider(String namesender, String namereceiver) {
+  Widget _orderRider(String namesender, String namereceiver, String orderId,
+      String senderId, String receiverId) {
     return Column(
       children: [
         Stack(
           children: [
             GestureDetector(
               onTap: () {
+                if (context.read<AppData>().listener != null) {
+                  context.read<AppData>().listener!.cancel();
+                  context.read<AppData>().listener = null;
+                  log('Stop real Time');
+                }
                 Get.to(() => const JobdscriptionriderPage(),
+                    arguments: {
+                      'orderId': orderId,
+                      'senderId': senderId,
+                      'receiverId': receiverId,
+                    },
                     transition: Transition.rightToLeftWithFade,
                     duration: const Duration(milliseconds: 300));
               },
@@ -213,5 +254,70 @@ class _HomeRiderPageState extends State<HomeRiderPage>
         const SizedBox(height: 10), // Properly placed inside the Column
       ],
     );
+  }
+
+  void startRealtimeGetOrders() {
+    final collectionRef = FirebaseFirestore.instance.collection('orders');
+
+    if (context.read<AppData>().listener != null) {
+      context.read<AppData>().listener!.cancel();
+      context.read<AppData>().listener = null;
+    }
+
+    context.read<AppData>().listener = collectionRef
+        .where('status', isEqualTo: '1')
+        .snapshots()
+        .listen((querySnapshot) async {
+      log("startRealtimeGetOrders");
+      log("Total documents: ${querySnapshot.docs.length}");
+
+      ordersList.clear(); // ล้างรายการก่อน
+
+      if (querySnapshot.docs.isNotEmpty) {
+        for (var doc in querySnapshot.docs) {
+          Map<String, dynamic> jsonData = doc.data() as Map<String, dynamic>;
+
+          // ดึงข้อมูลผู้ใช้จาก Firestore
+          String senderId = jsonData["senderId"];
+          String receiverId = jsonData["receiverId"];
+          DocumentSnapshot<Map<String, dynamic>> senderDoc =
+              await FirebaseFirestore.instance
+                  .collection('Users')
+                  .doc(senderId)
+                  .get();
+          DocumentSnapshot<Map<String, dynamic>> receiverDoc =
+              await FirebaseFirestore.instance
+                  .collection('Users')
+                  .doc(receiverId)
+                  .get();
+
+          String senderName = senderDoc.data()?['fullname'] ?? 'Unknown Sender';
+          String receiverName =
+              receiverDoc.data()?['fullname'] ?? 'Unknown Receiver';
+
+          // สร้าง Map สำหรับ orderData
+          Map<String, dynamic> orderData = {
+            "orderId": doc.id,
+            "senderId": senderId,
+            "receiverId": receiverId,
+            "senderName": senderName,
+            "receiverName": receiverName,
+          };
+
+          ordersList.add(orderData);
+          log(orderData['orderId']);
+        }
+
+        // เปลี่ยนสถานะการโหลดให้เป็น false เมื่อโหลดเสร็จ
+        setState(() {
+          isLoading = false;
+        });
+      } else {
+        log("No orders with status 1 found");
+        setState(() {
+          isLoading = false; // เปลี่ยนสถานะการโหลดให้เป็น false
+        });
+      }
+    }, onError: (error) => log("Listen failed: $error"));
   }
 }
