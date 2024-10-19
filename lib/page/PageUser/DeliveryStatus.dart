@@ -1,7 +1,12 @@
+import 'dart:io';
+
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart';
 
 class DeliveryStatusScreen extends StatefulWidget {
   @override
@@ -12,12 +17,105 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
   List<bool> statusActive = [false, false, false, false];
   bool isLoading = true;
   late String orderId;
+  File? selectedImage;
+  bool _isLoading = false;
+  String? uploadedImageUrl;
+  final box = GetStorage();
 
+  bool isImageUploaded = false;
   @override
   void initState() {
     super.initState();
     final Map<String, dynamic> args = Get.arguments as Map<String, dynamic>;
     orderId = args['orderId'] ?? 'Unknown orderId';
+    _fetchOrderData();
+    (orderId);
+  }
+
+  Future<void> pickImage(String orderId) async {
+    final pickedFile =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        selectedImage = File(pickedFile.path);
+        _isLoading = true; // เริ่มโหลด
+      });
+      // อัปโหลดภาพไปยัง Firebase Storage พร้อมกับ orderId
+      await uploadImageToFirebase(selectedImage!, orderId);
+    }
+  }
+
+  Future<void> uploadImageToFirebase(File image, String orderId) async {
+    try {
+      String fileName = DateTime.now().millisecondsSinceEpoch.toString();
+      Reference storageRef =
+          FirebaseStorage.instance.ref().child('images/$fileName');
+
+      // อัปโหลดภาพ
+      await storageRef.putFile(image);
+
+      // รับ URL ของภาพที่อัปโหลด
+      String imageUrl = await storageRef.getDownloadURL();
+
+      // อัปเดต Firestore ด้วย URL ของภาพและ orderId
+      await FirebaseFirestore.instance
+          .collection('orders')
+          .doc(orderId)
+          .update({
+        'senderPhoto': imageUrl,
+      });
+
+      // อัปเดตตัวแปรสถานะ
+      setState(() {
+        uploadedImageUrl = imageUrl; // ตั้งค่า URL ของภาพที่อัปโหลด
+        isImageUploaded = true; // อัปเดตสถานะว่ามีการอัปโหลด
+        _isLoading = false; // หยุดโหลด
+      });
+
+      // แจ้งเตือนเมื่ออัปโหลดเสร็จสิ้น
+      Get.snackbar('สำเร็จ', 'อัปโหลดรูปภาพเรียบร้อยแล้ว');
+    } catch (e) {
+      Get.snackbar('ข้อผิดพลาด', 'ไม่สามารถอัปโหลดรูปภาพได้: $e');
+    }
+  }
+
+  Future<void> _fetchOrderData() async {
+    try {
+      String userId = box.read('Userid');
+      // ดึงข้อมูลจาก Firestore ตาม orderId
+      DocumentSnapshot orderDoc = await FirebaseFirestore.instance
+          .collection('orders')
+          .doc(orderId)
+          .get();
+
+      // ตรวจสอบค่า senderPhoto และ receiverId
+      if (orderDoc.exists) {
+        var data = orderDoc.data() as Map<String, dynamic>;
+
+        // ตรวจสอบว่าเป็นผู้รับหรือไม่
+        if (data['receiverId'] == userId) {
+          // เปลี่ยน currentUserId เป็น userId ของผู้ใช้ปัจจุบัน
+          setState(() {
+            isImageUploaded = true; // ถ้าเป็นผู้รับ จะไม่ให้แสดงปุ่ม
+            uploadedImageUrl = data['senderPhoto']; // ยังสามารถดู URL ของภาพได้
+          });
+        } else {
+          // ถ้าไม่ใช่ผู้รับ ตรวจสอบค่า senderPhoto
+          if (data['senderPhoto'] != null) {
+            setState(() {
+              uploadedImageUrl = data['senderPhoto'];
+              isImageUploaded = true; // อัปเดตสถานะว่ามีการอัปโหลด
+            });
+          } else {
+            setState(() {
+              isImageUploaded = false; // ไม่มีการอัปโหลด
+            });
+          }
+        }
+      }
+    } catch (e) {
+      Get.snackbar('ข้อผิดพลาด', 'ไม่สามารถดึงข้อมูลได้: $e');
+    }
   }
 
   @override
@@ -70,7 +168,7 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
                           SizedBox(height: 20),
                           _buildUserDetails(orderData),
                           SizedBox(height: 16),
-                          _buildTitle('รูปประกอบสถานะระหว่างจัดส่ง'),
+                          _buildTitle('รูปสินค้าระหว่างการจัดส่ง'),
                           SizedBox(height: 10),
                           _buildOrderItemDetails(orderData),
                           SizedBox(height: 20),
@@ -257,9 +355,12 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
             Container(
               width: 130,
               height: 120,
-              child: Image.network(
-                orderItem['Photos'] ?? 'https://via.placeholder.com/150',
-                fit: BoxFit.cover,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(15), // ปรับขอบให้โค้ง
+                child: Image.network(
+                  orderItem['Photos'] ?? 'https://via.placeholder.com/150',
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
             SizedBox(width: 30),
@@ -315,29 +416,78 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
   }
 
   Widget _buildDeliveryPersonDetails(Map<String, dynamic> orderData) {
-    return FutureBuilder<DocumentSnapshot>(
-      future: FirebaseFirestore.instance
-          .collection('Users')
-          .doc(orderData['receiverId'])
-          .get(),
+    final senderId = orderData['senderId'];
+    final receiverId = orderData['receiverId'];
+
+    return FutureBuilder<List<DocumentSnapshot>>(
+      future: Future.wait([
+        FirebaseFirestore.instance.collection('Users').doc(senderId).get(),
+        FirebaseFirestore.instance.collection('Users').doc(receiverId).get(),
+      ]),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return CircularProgressIndicator();
+          return Center(child: CircularProgressIndicator());
         }
-        if (snapshot.hasError || !snapshot.hasData) {
-          return Text('Error loading delivery person details');
+        if (snapshot.hasError ||
+            !snapshot.hasData ||
+            snapshot.data!.length < 2) {
+          return Text('Error loading delivery details');
         }
-        final receiverData = snapshot.data!.data() as Map<String, dynamic>;
+
+        final senderData = snapshot.data![0].data() as Map<String, dynamic>;
+        final receiverData = snapshot.data![1].data() as Map<String, dynamic>;
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // ข้อมูลผู้ส่ง
             RichText(
               text: TextSpan(
                 style: TextStyle(fontSize: 16, color: Colors.black),
                 children: [
                   TextSpan(
-                      text: 'ผู้รับ: ',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
+                    text: 'ผู้ส่ง: ',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  TextSpan(text: senderData['fullname'] ?? 'ไม่ระบุ'),
+                ],
+              ),
+            ),
+            RichText(
+              text: TextSpan(
+                style: TextStyle(fontSize: 16, color: Colors.black),
+                children: [
+                  TextSpan(
+                    text: 'ที่อยู่ผู้ส่ง: ',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  TextSpan(text: senderData['address'] ?? 'ไม่ระบุ'),
+                ],
+              ),
+            ),
+            RichText(
+              text: TextSpan(
+                style: TextStyle(fontSize: 16, color: Colors.black),
+                children: [
+                  TextSpan(
+                    text: 'เบอร์โทรผู้ส่ง: ',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  TextSpan(text: senderData['phone'] ?? 'ไม่ระบุ'),
+                ],
+              ),
+            ),
+            SizedBox(height: 10),
+
+            // ข้อมูลผู้รับ
+            RichText(
+              text: TextSpan(
+                style: TextStyle(fontSize: 16, color: Colors.black),
+                children: [
+                  TextSpan(
+                    text: 'ผู้รับ: ',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   TextSpan(text: receiverData['fullname'] ?? 'ไม่ระบุ'),
                 ],
               ),
@@ -347,8 +497,9 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
                 style: TextStyle(fontSize: 16, color: Colors.black),
                 children: [
                   TextSpan(
-                      text: 'ที่อยู่: ',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
+                    text: 'ที่อยู่ผู้รับ: ',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   TextSpan(text: orderData['deliveryAddress'] ?? 'ไม่ระบุ'),
                 ],
               ),
@@ -358,36 +509,106 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
                 style: TextStyle(fontSize: 16, color: Colors.black),
                 children: [
                   TextSpan(
-                      text: 'เบอร์โทร: ',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
+                    text: 'เบอร์โทรผู้รับ: ',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   TextSpan(text: receiverData['phone'] ?? 'ไม่ระบุ'),
                 ],
               ),
             ),
+
+            // เพิ่มรูปภาพประกอบสถานะ
+            _buildAddImageSection(),
           ],
         );
       },
     );
   }
 
-  Widget _buildViewLocationButton(Map<String, dynamic> orderData) {
-    return Center(
-      child: ElevatedButton(
-        onPressed: () {
-          // TODO: Implement location viewing functionality
-        },
-        child: Text(
-          'ดูตำแหน่ง',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
+  Widget _buildAddImageSection() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            'รูปประกอบสถานะระหว่างจัดส่ง:',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: 10),
+          Center(
+            child: _isLoading
+                ? CircularProgressIndicator() // แสดง spinner ขณะกำลังโหลด
+                : isImageUploaded && uploadedImageUrl != null
+                    ? Column(
+                        children: [
+                          ClipRRect(
+                            borderRadius:
+                                BorderRadius.circular(15), // ปรับขอบให้โค้ง
+                            child: Image.network(
+                              uploadedImageUrl!,
+                              height: 150,
+                              width: 150,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          SizedBox(height: 10),
+                          Text(
+                            'เพิ่มรูปภาพแล้ว',
+                            style: TextStyle(fontSize: 16, color: Colors.green),
+                          ),
+                        ],
+                      )
+                    : Text(
+                        'ไม่มีรูปภาพประกอบสถานะ',
+                        style: TextStyle(fontSize: 16, color: Colors.red),
+                      ),
+          ),
+          SizedBox(height: 10),
+          // แสดงปุ่มเพิ่มรูปภาพเฉพาะเมื่อ senderPhoto เป็น null และไม่ใช่ผู้รับ
+          !_isLoading && !isImageUploaded
+              ? Align(
+                  alignment: Alignment.center,
+                  child: ElevatedButton(
+                    onPressed: () => pickImage(orderId),
+                    child: Text('เพิ่มรูปภาพ'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF412160),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 10),
+                    ),
+                  ),
+                )
+              : SizedBox.shrink(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildViewLocationButton(Map orderData) {
+    return Column(
+      children: [
+        SizedBox(height: 30), // เพิ่มระยะห่างด้านบน
+        Center(
+          child: ElevatedButton(
+            onPressed: () {
+              // TODO: Implement location viewing functionality
+            },
+            child: Text(
+              'ดูตำแหน่ง',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+            ),
           ),
         ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.green,
-          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-        ),
-      ),
+      ],
     );
   }
 
@@ -411,7 +632,7 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
       case 0:
         return 'รอจัดส่ง';
       case 1:
-        return 'รับของแล้ว';
+        return 'รับงานแล้ว';
       case 2:
         return 'กำลังจัดส่ง';
       case 3:

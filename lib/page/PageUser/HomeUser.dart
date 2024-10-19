@@ -133,7 +133,7 @@ class _HomeUserpageState extends State<HomeUserpage>
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('orders')
-          .where('senderId', isEqualTo: userId) // ปรับให้ตรงกับ userId ของคุณ
+          .where('senderId', isEqualTo: userId)
           .snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
@@ -151,25 +151,32 @@ class _HomeUserpageState extends State<HomeUserpage>
           itemBuilder: (context, index) {
             final order = orders[index];
             final receiverId = order['receiverId'];
-            final orderId = order.id; // ดึง orderId
+            final orderId = order.id;
+            final status = order['status']; // ดึงสถานะ
 
-            // ดึงชื่อผู้รับจาก Firestore ตาม receiverId
+            // ถ้าสถานะเป็น 4 จะไม่แสดงออเดอร์นี้
+            if (status == '4') {
+              return const SizedBox.shrink(); // ซ่อน Widget
+            }
+
             return FutureBuilder<DocumentSnapshot>(
               future: FirebaseFirestore.instance
-                  .collection('Users') // สมมติว่าชื่อ collection คือ 'users'
+                  .collection('Users')
                   .doc(receiverId)
                   .get(),
               builder: (context, receiverSnapshot) {
                 if (!receiverSnapshot.hasData) {
-                  return const SizedBox(); // หรือสามารถแสดง CircularProgressIndicator()
+                  return const SizedBox();
                 }
 
                 final receiverData = receiverSnapshot.data!;
-                final receiverName =
-                    receiverData['fullname']; // หรือ field ที่คุณใช้เก็บชื่อ
+                final receiverName = receiverData['fullname'] ?? 'ไม่ระบุ';
 
-                return _orderRider(userService.name, receiverName,
-                    orderId); // ส่ง orderId ไปด้วย
+                return _orderRider(
+                  userService.name,
+                  receiverName,
+                  orderId,
+                );
               },
             );
           },
@@ -183,7 +190,7 @@ class _HomeUserpageState extends State<HomeUserpage>
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('orders')
-          .where('receiverId', isEqualTo: userId) // ปรับให้ตรงกับ userId ของคุณ
+          .where('receiverId', isEqualTo: userId)
           .snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
@@ -201,25 +208,32 @@ class _HomeUserpageState extends State<HomeUserpage>
           itemBuilder: (context, index) {
             final order = orders[index];
             final senderId = order['senderId'];
-            final orderId = order.id; // ดึง orderId
+            final orderId = order.id;
+            final status = order['status']; // ดึงสถานะ
 
-            // ดึงชื่อผู้ส่งจาก Firestore ตาม senderId
+            // ถ้าสถานะเป็น 4 จะไม่แสดงออเดอร์นี้
+            if (status == '4') {
+              return const SizedBox.shrink(); // ซ่อน Widget
+            }
+
             return FutureBuilder<DocumentSnapshot>(
               future: FirebaseFirestore.instance
-                  .collection('Users') // สมมติว่าชื่อ collection คือ 'users'
+                  .collection('Users')
                   .doc(senderId)
                   .get(),
               builder: (context, senderSnapshot) {
                 if (!senderSnapshot.hasData) {
-                  return const SizedBox(); // หรือสามารถแสดง CircularProgressIndicator()
+                  return const SizedBox();
                 }
 
                 final senderData = senderSnapshot.data!;
-                final senderName =
-                    senderData['fullname']; // หรือ field ที่คุณใช้เก็บชื่อ
-                log(senderName);
-                return _orderRider(senderName, userService.name,
-                    orderId); // ส่ง orderId ไปด้วย
+                final senderName = senderData['fullname'] ?? 'ไม่ระบุ';
+
+                return _orderRider(
+                  senderName,
+                  userService.name,
+                  orderId,
+                );
               },
             );
           },
