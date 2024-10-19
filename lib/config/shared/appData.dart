@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 class AppData with ChangeNotifier {
-  UserProfile _userProfile = UserProfile();
+  OrderUser order = OrderUser();
+  deliveryLocation delivery = deliveryLocation();
+  pickupLocation pickup = pickupLocation();
   String fullname = '';
   String email = '';
   String password = '';
@@ -17,7 +19,18 @@ class AppData with ChangeNotifier {
   StreamSubscription? listener;
 }
 
-class UserProfile {
-  int idx = 0;
-  String fullname = '';
+class OrderUser {
+  String orderId = '';
+  String senderId = '';
+  String receiverId = '';
+}
+
+class deliveryLocation {
+  double? latitude; // เก็บ latitude เป็น double?
+  double? longitude; // เก็บ longitude เป็น double?
+}
+
+class pickupLocation {
+  double? latitude; // เก็บ latitude เป็น double?
+  double? longitude; // เก็บ longitude เป็น double?
 }

@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:quickrider/config/shared/appData.dart';
 import 'package:quickrider/page/PageRider/JobdscriptionRider.dart';
+import 'package:quickrider/page/PageRider/MapOrderRider.dart';
 import 'package:quickrider/page/PageRider/RiderService.dart';
 import 'package:quickrider/page/PageRider/widgetRider.dart';
 import 'package:quickrider/page/ChangePage/NavigationBarRider.dart';
@@ -20,7 +21,6 @@ class HomeRiderPage extends StatefulWidget {
 
 class _HomeRiderPageState extends State<HomeRiderPage>
     with TickerProviderStateMixin {
-  late Map<String, dynamic>? rider;
   int _selectedIndex = 0;
   List<Map<String, dynamic>> ordersList = [];
   bool isLoading = true; // ตัวแปรสำหรับสถานะการโหลด
@@ -58,7 +58,7 @@ class _HomeRiderPageState extends State<HomeRiderPage>
             child: Padding(
               padding: const EdgeInsets.only(top: 140),
               child: Container(
-                width: MediaQuery.of(context).size.width * 1,
+                width: MediaQuery.of(context).size.width,
                 height:
                     MediaQuery.of(context).size.height, // ใช้ความสูงของหน้าจอ
                 decoration: const BoxDecoration(
@@ -102,7 +102,6 @@ class _HomeRiderPageState extends State<HomeRiderPage>
                           ),
                         ),
                       ),
-
                       _buildSentItems(), // เรียกฟังก์ชันแสดงออเดอร์
                     ],
                   ),
@@ -129,9 +128,32 @@ class _HomeRiderPageState extends State<HomeRiderPage>
 
   Widget _buildSentItems() {
     if (isLoading) {
-      // แสดง CircularProgressIndicator ถ้ากำลังโหลดข้อมูล
-      return Center(
-        child: CircularProgressIndicator(),
+      // Show CircularProgressIndicator while loading data
+      return const Center(
+        child: Column(
+          children: [
+            SizedBox(height: 30), // Add some space below the text
+            CircularProgressIndicator(),
+          ],
+        ),
+      );
+    }
+
+    if (ordersList.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center, // Center vertically
+          children: [
+            SizedBox(height: 30), // Add some space below the text
+            Text(
+              'ยังไม่มีออเดอร์ในตอนนี้...',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.black,
+              ),
+            ),
+          ],
+        ),
       );
     }
 
@@ -142,19 +164,48 @@ class _HomeRiderPageState extends State<HomeRiderPage>
           ...ordersList.map((order) {
             String senderName = order['senderName'] ?? 'Unknown Sender';
             String receiverName = order['receiverName'] ?? 'Unknown Receiver';
-            String orderId = order['orderId'] ?? 'Unknown orderId';
-            String senderId = order['senderId'] ?? 'Unknown senderId';
-            String receiverId = order['receiverId'] ?? 'Unknown receiverId';
+            String orderId = order['orderId'] ?? 'Unknown Order ID';
+            String senderId = order['senderId'] ?? 'Unknown Sender ID';
+            String receiverId = order['receiverId'] ?? 'Unknown Receiver ID';
+
+            // ดึงข้อมูลตำแหน่ง pickupLocation และ deliveryLocation
+            Map<String, dynamic> pickupLocation = order['pickupLocation'] ?? {};
+            double pickupLatitude = pickupLocation['latitude'] ?? 0.0;
+            double pickupLongitude = pickupLocation['longitude'] ?? 0.0;
+
+            Map<String, dynamic> deliveryLocation =
+                order['deliveryLocation'] ?? {};
+            double deliveryLatitude = deliveryLocation['latitude'] ?? 0.0;
+            double deliveryLongitude = deliveryLocation['longitude'] ?? 0.0;
+
+            // สร้าง UI สำหรับแสดงออเดอร์ พร้อมตำแหน่ง
             return _orderRider(
-                senderName, receiverName, orderId, senderId, receiverId);
+              senderName,
+              receiverName,
+              orderId,
+              senderId,
+              receiverId,
+              pickupLatitude, // ส่ง latitude ของ pickupLocation
+              pickupLongitude, // ส่ง longitude ของ pickupLocation
+              deliveryLatitude, // ส่ง latitude ของ deliveryLocation
+              deliveryLongitude, // ส่ง longitude ของ deliveryLocation
+            );
           }).toList(),
         ],
       ),
     );
   }
 
-  Widget _orderRider(String namesender, String namereceiver, String orderId,
-      String senderId, String receiverId) {
+  Widget _orderRider(
+      String namesender,
+      String namereceiver,
+      String orderId,
+      String senderId,
+      String receiverId,
+      double pickupLatitude,
+      double pickupLongitude,
+      double deliveryLatitude,
+      double deliveryLongitude) {
     return Column(
       children: [
         Stack(
@@ -166,12 +217,14 @@ class _HomeRiderPageState extends State<HomeRiderPage>
                   context.read<AppData>().listener = null;
                   log('Stop real Time');
                 }
+                context.read<AppData>().order.orderId = orderId;
+                context.read<AppData>().order.senderId = senderId;
+                context.read<AppData>().order.receiverId = receiverId;
+                context.read<AppData>().pickup.latitude = pickupLatitude;
+                context.read<AppData>().pickup.longitude = pickupLongitude;
+                context.read<AppData>().delivery.latitude = deliveryLatitude;
+                context.read<AppData>().delivery.longitude = deliveryLongitude;
                 Get.to(() => const JobdscriptionriderPage(),
-                    arguments: {
-                      'orderId': orderId,
-                      'senderId': senderId,
-                      'receiverId': receiverId,
-                    },
                     transition: Transition.rightToLeftWithFade,
                     duration: const Duration(milliseconds: 300));
               },
@@ -211,7 +264,22 @@ class _HomeRiderPageState extends State<HomeRiderPage>
                         ],
                       ),
                       ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          context.read<AppData>().order.orderId = orderId;
+                          context.read<AppData>().order.senderId = senderId;
+                          context.read<AppData>().order.receiverId = receiverId;
+                          context.read<AppData>().pickup.latitude =
+                              pickupLatitude;
+                          context.read<AppData>().pickup.longitude =
+                              pickupLongitude;
+                          context.read<AppData>().delivery.latitude =
+                              deliveryLatitude;
+                          context.read<AppData>().delivery.longitude =
+                              deliveryLongitude;
+                          Get.to(() => const MapOrderPage(),
+                              transition: Transition.rightToLeftWithFade,
+                              duration: const Duration(milliseconds: 300));
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor:
                               const Color.fromARGB(255, 18, 172, 82),
@@ -279,6 +347,8 @@ class _HomeRiderPageState extends State<HomeRiderPage>
 
           // ดึงข้อมูลผู้ใช้จาก Firestore
           String senderId = jsonData["senderId"];
+          var pickupLocation = jsonData['pickupLocation'];
+          var deliveryLocation = jsonData['deliveryLocation'];
           String receiverId = jsonData["receiverId"];
           DocumentSnapshot<Map<String, dynamic>> senderDoc =
               await FirebaseFirestore.instance
@@ -302,6 +372,14 @@ class _HomeRiderPageState extends State<HomeRiderPage>
             "receiverId": receiverId,
             "senderName": senderName,
             "receiverName": receiverName,
+            "pickupLocation": {
+              "latitude": pickupLocation["latitude"],
+              "longitude": pickupLocation["longitude"]
+            },
+            "deliveryLocation": {
+              "latitude": deliveryLocation["latitude"],
+              "longitude": deliveryLocation["longitude"]
+            },
           };
 
           ordersList.add(orderData);

@@ -3,7 +3,10 @@ import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:provider/provider.dart';
+import 'package:quickrider/config/shared/appData.dart';
 import 'package:quickrider/page/PageRider/HomeRider.dart';
+import 'package:quickrider/page/PageRider/MapOrderRider.dart';
 import 'package:quickrider/page/PageRider/RiderService.dart';
 import 'package:quickrider/page/PageRider/widgetRider.dart';
 import 'package:quickrider/page/PageUser/SharedWidget.dart';
@@ -35,10 +38,9 @@ class _JobdscriptionriderPageState extends State<JobdscriptionriderPage> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    final Map<String, dynamic> args = Get.arguments as Map<String, dynamic>;
-    orderId = args['orderId'] ?? 'Unknow orderId';
-    senderId = args['senderId'] ?? 'Unknow senderId';
-    receiverId = args['receiverId'] ?? 'Unknow receiverId';
+    orderId = context.read<AppData>().order.orderId;
+    senderId = context.read<AppData>().order.senderId;
+    receiverId = context.read<AppData>().order.receiverId;
     loadData = loadDataAstnc();
   }
 
@@ -78,7 +80,12 @@ class _JobdscriptionriderPageState extends State<JobdscriptionriderPage> {
                               if (snapshot.connectionState !=
                                   ConnectionState.done) {
                                 return const Center(
-                                  child: CircularProgressIndicator(),
+                                  child: Column(
+                                    children: [
+                                      const SizedBox(height: 100),
+                                      CircularProgressIndicator(),
+                                    ],
+                                  ),
                                 );
                               }
                               return Column(
@@ -229,7 +236,13 @@ class _JobdscriptionriderPageState extends State<JobdscriptionriderPage> {
                                   const Divider(),
                                   const SizedBox(height: 20),
                                   ElevatedButton(
-                                    onPressed: () {},
+                                    onPressed: () {
+                                      Get.to(() => const MapOrderPage(),
+                                          transition:
+                                              Transition.rightToLeftWithFade,
+                                          duration: const Duration(
+                                              milliseconds: 300));
+                                    },
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: const Color.fromARGB(
                                           255, 18, 172, 82),
