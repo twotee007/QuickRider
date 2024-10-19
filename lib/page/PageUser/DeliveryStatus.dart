@@ -193,27 +193,42 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
   }
 
   Widget _buildUserDetails(Map<String, dynamic> orderData) {
+    final riderId = orderData['riderId']; // ดึง riderId จาก orderData
+
+    if (riderId == null || riderId.isEmpty) {
+      // กรณีไม่มี riderId ให้แสดงข้อความรอไรเดอร์รับงาน
+      return ListTile(
+        title: Text(
+          'รอไรเดอร์รับงาน.....',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        leading: Icon(Icons.access_time, size: 40, color: Colors.grey),
+      );
+    }
+
     return FutureBuilder<DocumentSnapshot>(
       future: FirebaseFirestore.instance
           .collection('Users')
-          .doc(orderData['senderId'])
+          .doc(riderId) // ใช้ riderId ที่ตรวจสอบแล้ว
           .get(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return CircularProgressIndicator();
+          return Center(child: CircularProgressIndicator());
         }
-        if (snapshot.hasError || !snapshot.hasData) {
-          return Text('Error loading user details');
+        if (snapshot.hasError || !snapshot.hasData || snapshot.data == null) {
+          return Text('เกิดข้อผิดพลาดในการโหลดข้อมูล');
         }
-        final userData = snapshot.data!.data() as Map<String, dynamic>;
+
+        final riderData = snapshot.data!.data() as Map<String, dynamic>;
+
         return ListTile(
           leading: CircleAvatar(
             radius: 40,
             backgroundImage: NetworkImage(
-                userData['img'] ?? 'https://via.placeholder.com/150'),
+                riderData['img'] ?? 'https://via.placeholder.com/150'),
           ),
-          title: Text('ชื่อ: ${userData['fullname']}'),
-          subtitle: Text('เบอร์โทร: ${userData['phone']}'),
+          title: Text('ชื่อไรเดอร์: ${riderData['fullname']}'),
+          subtitle: Text('เบอร์โทร: ${riderData['phone']}'),
         );
       },
     );
@@ -321,7 +336,7 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
                 style: TextStyle(fontSize: 16, color: Colors.black),
                 children: [
                   TextSpan(
-                      text: 'ผู้จัดส่ง: ',
+                      text: 'ผู้รับ: ',
                       style: TextStyle(fontWeight: FontWeight.bold)),
                   TextSpan(text: receiverData['fullname'] ?? 'ไม่ระบุ'),
                 ],
