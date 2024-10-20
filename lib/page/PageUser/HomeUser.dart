@@ -146,40 +146,60 @@ class _HomeUserpageState extends State<HomeUserpage>
           return const Center(child: Text('คุณยังไม่มีการส่งสินค้า'));
         }
 
-        return ListView.builder(
-          itemCount: orders.length,
-          itemBuilder: (context, index) {
-            final order = orders[index];
-            final receiverId = order['receiverId'];
-            final orderId = order.id;
-            final status = order['status']; // ดึงสถานะ
+        return Column(
+          children: [
+            // ตรวจสอบว่ามีออเดอร์มากกว่า 1 หรือไม่
+            if (orders.length > 1)
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: ElevatedButton(
+                  onPressed: () {
+                    // กำหนดสิ่งที่ต้องการทำเมื่อกดปุ่ม
+                    log("ปุ่มถูกกด");
+                  },
+                  child:
+                      const Text('ดูตำแหน่ง Rider ทั้งหมดของสินค้าที่คุณส่ง'),
+                ),
+              ),
+            Expanded(
+              child: ListView.builder(
+                itemCount: orders.length,
+                itemBuilder: (context, index) {
+                  final order = orders[index];
+                  final receiverId = order['receiverId'];
+                  final orderId = order.id;
+                  final status = order['status']; // ดึงสถานะ
 
-            // ถ้าสถานะเป็น 4 จะไม่แสดงออเดอร์นี้
-            if (status == '4') {
-              return const SizedBox.shrink(); // ซ่อน Widget
-            }
+                  // ถ้าสถานะเป็น 4 จะไม่แสดงออเดอร์นี้
+                  if (status == '4') {
+                    return const SizedBox.shrink(); // ซ่อน Widget
+                  }
 
-            return FutureBuilder<DocumentSnapshot>(
-              future: FirebaseFirestore.instance
-                  .collection('Users')
-                  .doc(receiverId)
-                  .get(),
-              builder: (context, receiverSnapshot) {
-                if (!receiverSnapshot.hasData) {
-                  return const SizedBox();
-                }
+                  return FutureBuilder<DocumentSnapshot>(
+                    future: FirebaseFirestore.instance
+                        .collection('Users')
+                        .doc(receiverId)
+                        .get(),
+                    builder: (context, receiverSnapshot) {
+                      if (!receiverSnapshot.hasData) {
+                        return const SizedBox();
+                      }
 
-                final receiverData = receiverSnapshot.data!;
-                final receiverName = receiverData['fullname'] ?? 'ไม่ระบุ';
+                      final receiverData = receiverSnapshot.data!;
+                      final receiverName =
+                          receiverData['fullname'] ?? 'ไม่ระบุ';
 
-                return _orderRider(
-                  userService.name,
-                  receiverName,
-                  orderId,
-                );
-              },
-            );
-          },
+                      return _orderRider(
+                        userService.name,
+                        receiverName,
+                        orderId,
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
         );
       },
     );
@@ -203,40 +223,59 @@ class _HomeUserpageState extends State<HomeUserpage>
           return const Center(child: Text('คุณยังไม่มีการรับสินค้า'));
         }
 
-        return ListView.builder(
-          itemCount: orders.length,
-          itemBuilder: (context, index) {
-            final order = orders[index];
-            final senderId = order['senderId'];
-            final orderId = order.id;
-            final status = order['status']; // ดึงสถานะ
+        return Column(
+          children: [
+            // ตรวจสอบว่ามีออเดอร์มากกว่า 1 หรือไม่
+            if (orders.length > 1)
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: ElevatedButton(
+                  onPressed: () {
+                    // สิ่งที่ต้องการทำเมื่อกดปุ่ม
+                    log("ปุ่มถูกกด");
+                  },
+                  child:
+                      const Text('ดูตำแหน่ง Rider ทั้งหมดของสินค้าที่คุณรับ'),
+                ),
+              ),
+            Expanded(
+              child: ListView.builder(
+                itemCount: orders.length,
+                itemBuilder: (context, index) {
+                  final order = orders[index];
+                  final senderId = order['senderId'];
+                  final orderId = order.id;
+                  final status = order['status']; // ดึงสถานะ
 
-            // ถ้าสถานะเป็น 4 จะไม่แสดงออเดอร์นี้
-            if (status == '4') {
-              return const SizedBox.shrink(); // ซ่อน Widget
-            }
+                  // ถ้าสถานะเป็น 4 จะไม่แสดงออเดอร์นี้
+                  if (status == '4') {
+                    return const SizedBox.shrink(); // ซ่อน Widget
+                  }
 
-            return FutureBuilder<DocumentSnapshot>(
-              future: FirebaseFirestore.instance
-                  .collection('Users')
-                  .doc(senderId)
-                  .get(),
-              builder: (context, senderSnapshot) {
-                if (!senderSnapshot.hasData) {
-                  return const SizedBox();
-                }
+                  return FutureBuilder<DocumentSnapshot>(
+                    future: FirebaseFirestore.instance
+                        .collection('Users')
+                        .doc(senderId)
+                        .get(),
+                    builder: (context, senderSnapshot) {
+                      if (!senderSnapshot.hasData) {
+                        return const SizedBox();
+                      }
 
-                final senderData = senderSnapshot.data!;
-                final senderName = senderData['fullname'] ?? 'ไม่ระบุ';
+                      final senderData = senderSnapshot.data!;
+                      final senderName = senderData['fullname'] ?? 'ไม่ระบุ';
 
-                return _orderRider(
-                  senderName,
-                  userService.name,
-                  orderId,
-                );
-              },
-            );
-          },
+                      return _orderRider(
+                        senderName,
+                        userService.name,
+                        orderId,
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
         );
       },
     );

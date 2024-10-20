@@ -37,8 +37,8 @@ class CustomBottomNavigationBar extends StatelessWidget {
               label: 'หน้าแรก',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.map),
-              label: 'แผนที่',
+              icon: Icon(Icons.history),
+              label: 'ประวัติ',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.person),
