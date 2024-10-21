@@ -8,6 +8,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:quickrider/page/ChangePage/NavigationBarUser.dart';
 import 'package:quickrider/page/PageUser/DeliveryStatus.dart';
+
 import 'package:quickrider/page/PageUser/SharedWidget.dart';
 import 'package:quickrider/page/PageUser/UserService.dart';
 
@@ -23,18 +24,12 @@ class _HistoryPageUserState extends State<HistoryPageUser>
   int _selectedIndex = 1;
   final box = GetStorage();
   final userService = Get.find<UserService>();
+  late String orderId;
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
   }
-
-  // @override
-  // void initState() {
-  //   // TODO: implement initState
-  //   super.initState();
-  //   loadDate = loadDataAstnc();
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -47,8 +42,8 @@ class _HistoryPageUserState extends State<HistoryPageUser>
           Align(
             alignment: Alignment.topCenter,
             child: cycletop(
-              userService.name, // ใช้ข้อมูลชื่อจาก UserService
-              userService.url, // ใช้ข้อมูล URL จาก UserService
+              userService.name,
+              userService.url,
             ),
           ),
           Align(
@@ -117,10 +112,14 @@ class _HistoryPageUserState extends State<HistoryPageUser>
           return const Center(child: CircularProgressIndicator());
         }
 
-        final orders = snapshot.data!.docs;
+        final orders = snapshot.data!.docs.where((order) {
+          // แสดงเฉพาะรายการที่มีสถานะเป็น 4
+          return order['status'] == '4';
+        }).toList();
 
         if (orders.isEmpty) {
-          return const Center(child: Text('คุณยังไม่มีการส่งสินค้า'));
+          return const Center(
+              child: Text('คุณยังไม่มีการส่งสินค้าในสถานะที่แสดง'));
         }
 
         return ListView.builder(
@@ -129,12 +128,7 @@ class _HistoryPageUserState extends State<HistoryPageUser>
             final order = orders[index];
             final receiverId = order['receiverId'];
             final orderId = order.id;
-            final status = order['status']; // ดึงสถานะ
-
-            // ถ้าสถานะเป็น 4 จะไม่แสดงออเดอร์นี้
-            if (status == '4') {
-              return const SizedBox.shrink(); // ซ่อน Widget
-            }
+            final status = order['status'];
 
             return FutureBuilder<DocumentSnapshot>(
               future: FirebaseFirestore.instance
@@ -153,6 +147,7 @@ class _HistoryPageUserState extends State<HistoryPageUser>
                   userService.name,
                   receiverName,
                   orderId,
+                  status,
                 );
               },
             );
@@ -174,10 +169,14 @@ class _HistoryPageUserState extends State<HistoryPageUser>
           return const Center(child: CircularProgressIndicator());
         }
 
-        final orders = snapshot.data!.docs;
+        final orders = snapshot.data!.docs.where((order) {
+          // แสดงเฉพาะรายการที่มีสถานะเป็น 4
+          return order['status'] == '4';
+        }).toList();
 
         if (orders.isEmpty) {
-          return const Center(child: Text('คุณยังไม่มีการรับสินค้า'));
+          return const Center(
+              child: Text('คุณยังไม่มีการรับสินค้าในสถานะที่แสดง'));
         }
 
         return ListView.builder(
@@ -186,12 +185,7 @@ class _HistoryPageUserState extends State<HistoryPageUser>
             final order = orders[index];
             final senderId = order['senderId'];
             final orderId = order.id;
-            final status = order['status']; // ดึงสถานะ
-
-            // ถ้าสถานะเป็น 4 จะไม่แสดงออเดอร์นี้
-            if (status == '4') {
-              return const SizedBox.shrink(); // ซ่อน Widget
-            }
+            final status = order['status'];
 
             return FutureBuilder<DocumentSnapshot>(
               future: FirebaseFirestore.instance
@@ -210,6 +204,7 @@ class _HistoryPageUserState extends State<HistoryPageUser>
                   senderName,
                   userService.name,
                   orderId,
+                  status,
                 );
               },
             );
@@ -219,12 +214,10 @@ class _HistoryPageUserState extends State<HistoryPageUser>
     );
   }
 
-  Widget _orderRider(String senderName, String receiverName, String orderId) {
+  Widget _orderRider(
+      String senderName, String receiverName, String orderId, String status) {
     return Column(
       children: [
-        // เพิ่ม SizedBox ด้านบนเพื่อให้ขยับขึ้น
-        // เปลี่ยนจาก 10 เป็น 0 หรือค่าที่ต้องการ
-
         Stack(
           children: [
             Container(
@@ -268,6 +261,7 @@ class _HistoryPageUserState extends State<HistoryPageUser>
                           () => DeliveryStatusScreen(),
                           arguments: {
                             'orderId': orderId,
+                            'status': status,
                           },
                           transition: Transition.cupertino,
                           duration: const Duration(milliseconds: 300),
@@ -276,13 +270,15 @@ class _HistoryPageUserState extends State<HistoryPageUser>
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF00C853),
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 30, vertical: 10),
+                          horizontal: 30,
+                          vertical: 10,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
                         ),
                       ),
                       child: const Text(
-                        'ดูสถานะ',
+                        'รายละเอียด', // แสดงข้อความเป็น 'รายละเอียด' เสมอ
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 18,
@@ -295,31 +291,8 @@ class _HistoryPageUserState extends State<HistoryPageUser>
             ),
           ],
         ),
-        const SizedBox(height: 10), // ระยะห่างด้านล่าง
+        const SizedBox(height: 10),
       ],
     );
   }
-
-  // Future<void> loadDataAstnc() async {
-  //   String userid = box.read('Userid');
-  //   try {
-  //     // เข้าถึงเอกสารโดยใช้ Document ID
-  //     var docSnapshot = await db.collection('Users').doc(userid).get();
-
-  //     if (docSnapshot.exists) {
-  //       log('Document ID: ${docSnapshot.id}'); // แสดง ID ของเอกสาร
-
-  //       // เก็บข้อมูลใน Map
-  //       user = docSnapshot.data() as Map<String, dynamic>?;
-  //       log('Data: $user'); // แสดงข้อมูลทั้งหมด
-
-  //       // อัปเดต UI เมื่อโหลดข้อมูลเสร็จ
-  //       setState(() {}); // เรียกใช้ setState เพื่อให้ UI อัปเดต
-  //     } else {
-  //       log('No user found with docId: ${docSnapshot.id}');
-  //     }
-  //   } catch (e) {
-  //     log('Error fetching user: $e');
-  //   }
-  // }
 }
