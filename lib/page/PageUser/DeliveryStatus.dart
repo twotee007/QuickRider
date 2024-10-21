@@ -32,6 +32,14 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
     (orderId);
   }
 
+  Stream<DocumentSnapshot<Map<String, dynamic>>> _getOrderStream(
+      String orderId) {
+    return FirebaseFirestore.instance
+        .collection('orders')
+        .doc(orderId)
+        .snapshots();
+  }
+
   Future<void> pickImage(String orderId) async {
     final pickedFile =
         await ImagePicker().pickImage(source: ImageSource.gallery);
@@ -88,16 +96,29 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
           .doc(orderId)
           .get();
 
-      // ตรวจสอบค่า senderPhoto และ receiverId
+      // ตรวจสอบค่า senderPhoto, receiverId, และ status
       if (orderDoc.exists) {
         var data = orderDoc.data() as Map<String, dynamic>;
 
-        // ตรวจสอบว่าเป็นผู้รับหรือไม่
+        // ตรวจสอบสถานะ
+        String status = data['status'];
+
+        // ถ้าเป็นผู้รับ
         if (data['receiverId'] == userId) {
-          // เปลี่ยน currentUserId เป็น userId ของผู้ใช้ปัจจุบัน
           setState(() {
+            // เปลี่ยน currentUserId เป็น userId ของผู้ใช้ปัจจุบัน
             isImageUploaded = true; // ถ้าเป็นผู้รับ จะไม่ให้แสดงปุ่ม
-            uploadedImageUrl = data['senderPhoto']; // ยังสามารถดู URL ของภาพได้
+
+            // เปลี่ยนแปลงภาพตามสถานะ
+            if (status == '3') {
+              uploadedImageUrl = data['Photopickup']; // แสดงภาพจาก photopickup
+            } else if (status == '4') {
+              uploadedImageUrl =
+                  data['deliveredPhoto']; // แสดงภาพจาก deliveredPhoto
+            } else {
+              uploadedImageUrl =
+                  data['senderPhoto']; // ถ้าสถานะอื่นๆ ใช้ senderPhoto
+            }
           });
         } else {
           // ถ้าไม่ใช่ผู้รับ ตรวจสอบค่า senderPhoto
@@ -105,6 +126,16 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
             setState(() {
               uploadedImageUrl = data['senderPhoto'];
               isImageUploaded = true; // อัปเดตสถานะว่ามีการอัปโหลด
+              if (status == '3') {
+                uploadedImageUrl =
+                    data['Photopickup']; // แสดงภาพจาก photopickup
+              } else if (status == '4') {
+                uploadedImageUrl =
+                    data['deliveredPhoto']; // แสดงภาพจาก deliveredPhoto
+              } else {
+                uploadedImageUrl =
+                    data['senderPhoto']; // ถ้าสถานะอื่นๆ ใช้ senderPhoto
+              }
             });
           } else {
             setState(() {
@@ -326,7 +357,8 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
                 riderData['img'] ?? 'https://via.placeholder.com/150'),
           ),
           title: Text('ชื่อไรเดอร์: ${riderData['fullname']}'),
-          subtitle: Text('เบอร์โทร: ${riderData['phone']}'),
+          subtitle: Text(
+              'เบอร์โทร: ${riderData['phone']} \nทะเบียนรถ: ${riderData['registration']}'),
         );
       },
     );
@@ -518,71 +550,131 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
             ),
 
             // เพิ่มรูปภาพประกอบสถานะ
-            _buildAddImageSection(),
+            _buildAddImageSection(orderId),
           ],
         );
       },
     );
   }
 
-  Widget _buildAddImageSection() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(
-            'รูปประกอบสถานะระหว่างจัดส่ง:',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 10),
-          Center(
-            child: _isLoading
-                ? CircularProgressIndicator() // แสดง spinner ขณะกำลังโหลด
-                : isImageUploaded && uploadedImageUrl != null
-                    ? Column(
-                        children: [
-                          ClipRRect(
-                            borderRadius:
-                                BorderRadius.circular(15), // ปรับขอบให้โค้ง
-                            child: Image.network(
-                              uploadedImageUrl!,
-                              height: 150,
-                              width: 150,
-                              fit: BoxFit.cover,
-                            ),
+  Widget _buildAddImageSection(String orderId) {
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      stream: _getOrderStream(orderId), // เรียลไทม์สตรีม
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return CircularProgressIndicator(); // แสดง spinner ขณะกำลังโหลดข้อมูลจาก Firestore
+        }
+
+        if (!snapshot.hasData || !snapshot.data!.exists) {
+          return Text(
+            'ไม่มีข้อมูลคำสั่งซื้อ',
+            style: TextStyle(fontSize: 16, color: Colors.red),
+          );
+        }
+
+        var data = snapshot.data!.data() as Map<String, dynamic>;
+
+        // ตรวจสอบข้อมูล
+        String status = data['status'] ?? '';
+        String userId = box.read('Userid');
+        String uploadedImageUrl = '';
+        bool isImageUploaded = false;
+        bool isReceiver = data['receiverId'] == userId;
+
+        // ตรวจสอบสถานะและกำหนดรูปภาพตามลำดับสถานะ
+        if (status == '4') {
+          // ถ้า deliveredPhoto เป็น null, ให้ใช้ Photopickup จากสถานะ 3 หรือ senderPhoto จากสถานะก่อนหน้า
+          uploadedImageUrl = data['deliveredPhoto'] ??
+              data['Photopickup'] ??
+              data['senderPhoto'] ??
+              '';
+        } else if (status == '3') {
+          // ถ้า Photopickup เป็น null, ให้ใช้ senderPhoto จากสถานะก่อนหน้า
+          uploadedImageUrl = data['Photopickup'] ?? data['senderPhoto'] ?? '';
+        } else {
+          // สถานะอื่น ๆ ใช้ senderPhoto
+          uploadedImageUrl = data['senderPhoto'] ?? '';
+        }
+
+        // ถ้ามีรูปภาพใดๆ แสดงว่าอัปโหลดแล้ว
+        isImageUploaded = uploadedImageUrl.isNotEmpty;
+
+        // เมื่อโหลดภาพเสร็จแล้วให้ตั้งสถานะ _isLoading เป็น false
+        if (isImageUploaded) {
+          _isLoading = false;
+        }
+
+        return Center(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 20),
+            child: Column(
+              mainAxisSize:
+                  MainAxisSize.min, // ป้องกันไม่ให้ Column ยืดเต็มความสูง
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  'รูปประกอบสถานะระหว่างจัดส่ง:',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 10),
+                _isLoading
+                    ? CircularProgressIndicator() // แสดง spinner ระหว่างรอโหลดรูป
+                    : isImageUploaded
+                        ? Column(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(15),
+                                child: Image.network(
+                                  uploadedImageUrl,
+                                  height: 150,
+                                  width: 150,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              SizedBox(height: 10),
+                              Text(
+                                'เพิ่มรูปภาพแล้ว',
+                                style: TextStyle(
+                                    fontSize: 16, color: Colors.green),
+                              ),
+                            ],
+                          )
+                        : Text(
+                            'ไม่มีรูปภาพประกอบสถานะ',
+                            style: TextStyle(fontSize: 16, color: Colors.red),
                           ),
-                          SizedBox(height: 10),
-                          Text(
-                            'เพิ่มรูปภาพแล้ว',
-                            style: TextStyle(fontSize: 16, color: Colors.green),
+                SizedBox(height: 10),
+                // แสดงปุ่มเพิ่มรูปภาพเฉพาะเมื่อไม่ใช่ผู้รับและไม่มีการอัปโหลดภาพใดๆ
+                !isImageUploaded && !isReceiver
+                    ? Align(
+                        alignment: Alignment.center,
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            setState(() {
+                              _isLoading =
+                                  true; // แสดงสถานะกำลังโหลดขณะเพิ่มรูปภาพ
+                            });
+                            await pickImage(orderId); // ทำการเพิ่มรูปภาพ
+                            setState(() {
+                              _isLoading =
+                                  false; // หยุดแสดงสถานะโหลดเมื่อเพิ่มรูปภาพเสร็จ
+                            });
+                          },
+                          child: Text('เพิ่มรูปภาพ'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF412160),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 10),
                           ),
-                        ],
+                        ),
                       )
-                    : Text(
-                        'ไม่มีรูปภาพประกอบสถานะ',
-                        style: TextStyle(fontSize: 16, color: Colors.red),
-                      ),
+                    : SizedBox.shrink(),
+              ],
+            ),
           ),
-          SizedBox(height: 10),
-          // แสดงปุ่มเพิ่มรูปภาพเฉพาะเมื่อ senderPhoto เป็น null และไม่ใช่ผู้รับ
-          !_isLoading && !isImageUploaded
-              ? Align(
-                  alignment: Alignment.center,
-                  child: ElevatedButton(
-                    onPressed: () => pickImage(orderId),
-                    child: Text('เพิ่มรูปภาพ'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF412160),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 10),
-                    ),
-                  ),
-                )
-              : SizedBox.shrink(),
-        ],
-      ),
+        );
+      },
     );
   }
 

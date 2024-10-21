@@ -44,7 +44,7 @@ class _AddProductPageState extends State<AddProductPage> {
     // TODO: implement initState
     super.initState();
     // loadDate = loadDataAstnc();
-    phoneuser();
+    _initialize();
     _addProductFields();
   }
 
@@ -70,19 +70,36 @@ class _AddProductPageState extends State<AddProductPage> {
     }
   }
 
-  void phoneuser() async {
+  Future<void> _initialize() async {
+    String senderId = box.read('Userid'); // ดึง userId จาก Firestore
+    if (senderId != null) {
+      await phoneuser(senderId); // ส่ง userId เพื่อกรองเบอร์โทร
+    }
+  }
+
+  Future<void> phoneuser(String userId) async {
     try {
+      // ตรวจสอบ userId ที่ได้รับเข้ามา
+      if (userId.isEmpty) {
+        print('No valid userId provided.');
+        return;
+      }
+
+      // ดึงข้อมูลผู้ใช้ทั้งหมดที่มี type = 'user' และไม่ใช่ userId ปัจจุบัน
       QuerySnapshot snapshot = await FirebaseFirestore.instance
           .collection('Users')
-          .where('type', isEqualTo: 'user') // กรองเฉพาะประเภทผู้ใช้ 'user'
+          .where('type', isEqualTo: 'user') // กรองผู้ใช้ตามประเภท 'user'
+          .where(FieldPath.documentId,
+              isNotEqualTo: userId) // กรองไม่ให้ตรงกับ userId ปัจจุบัน
           .get();
 
+      // ดึงเฉพาะเบอร์โทรจากเอกสารที่ค้นพบ
       _databasePhones = snapshot.docs.map((doc) {
-        return doc['phone'] as String; // ดึงเบอร์โทรศัพท์จากเอกสาร
+        return doc['phone'] as String;
       }).toList();
 
-      // ทำอะไรกับเบอร์โทรศัพท์ที่ค้นพบ เช่น แสดงใน UI หรืออื่น ๆ
-      log('User Phones: $_databasePhones');
+      // แสดงข้อมูลเบอร์โทรที่ค้นพบใน log
+      log('User Phones (excluding current): $_databasePhones');
     } catch (e) {
       print('Error fetching user phones: $e');
     }
