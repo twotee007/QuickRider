@@ -266,7 +266,6 @@ class _HomeRiderPageState extends State<HomeRiderPage>
                       ),
                       ElevatedButton(
                         onPressed: () {
-                          _checkPermissions();
                           if (context.read<AppData>().listener != null) {
                             context.read<AppData>().listener!.cancel();
                             context.read<AppData>().listener = null;
@@ -275,17 +274,7 @@ class _HomeRiderPageState extends State<HomeRiderPage>
                           context.read<AppData>().order.orderId = orderId;
                           context.read<AppData>().order.senderId = senderId;
                           context.read<AppData>().order.receiverId = receiverId;
-                          context.read<AppData>().pickup.latitude =
-                              pickupLatitude;
-                          context.read<AppData>().pickup.longitude =
-                              pickupLongitude;
-                          context.read<AppData>().delivery.latitude =
-                              deliveryLatitude;
-                          context.read<AppData>().delivery.longitude =
-                              deliveryLongitude;
-                          Get.to(() => const MapOrderPage(),
-                              transition: Transition.rightToLeftWithFade,
-                              duration: const Duration(milliseconds: 300));
+                          submit(orderId);
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor:
@@ -404,6 +393,28 @@ class _HomeRiderPageState extends State<HomeRiderPage>
         });
       }
     }, onError: (error) => log("Listen failed: $error"));
+  }
+
+  void submit(String orderid) async {
+    showDialog(
+      context: Get.context!,
+      barrierDismissible: false, // Prevent dismissing while loading
+      builder: (BuildContext context) {
+        return const Center(
+          child:
+              CircularProgressIndicator(), // Show circular progress indicator
+        );
+      },
+    );
+    _checkPermissions();
+    FirebaseFirestore firestore = FirebaseFirestore.instance;
+    await firestore.collection('orders').doc(orderid).update({
+      'status': '2',
+    });
+    Get.back();
+    Get.to(() => const MapOrderPage(),
+        transition: Transition.rightToLeftWithFade,
+        duration: const Duration(milliseconds: 300));
   }
 
   Future<void> _checkPermissions() async {

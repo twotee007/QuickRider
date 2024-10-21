@@ -45,12 +45,6 @@ class _MapOrderPageState extends State<MapOrderPage> {
     _getOrderStatus();
   }
 
-  void _stopTrackingLocation() {
-    _positionStreamSubscription?.cancel(); // Cancel the stream if it's active
-    _positionStreamSubscription = null;
-    log("StopRealtime Tracking stopped");
-  }
-
   Future<void> _trackLocation() async {
     String riderid = box.read('Riderid');
     // รับตำแหน่งปัจจุบันก่อนที่จะเริ่มการติดตาม
@@ -104,6 +98,26 @@ class _MapOrderPageState extends State<MapOrderPage> {
   Future<void> _getOrderStatus() async {
     String riderid = box.read('Riderid');
     try {
+      if (riderid != null) {
+        DocumentSnapshot<Map<String, dynamic>> riderDocumentSnapshot =
+            await FirebaseFirestore.instance
+                .collection('Users')
+                .doc(riderid)
+                .get();
+
+        if (riderDocumentSnapshot.exists) {
+          final gpsLocation = riderDocumentSnapshot.data()?['gpsLocation'];
+          if (gpsLocation != null) {
+            double riderLat = gpsLocation['latitude'];
+            double riderLng = gpsLocation['longitude'];
+            start = LatLng(riderLat, riderLng); // กำหนดค่า location ของ rider
+            _mapController.move(start, currentZoom);
+            log('Rider Location: $start');
+          }
+        } else {
+          log("No such Rider document!");
+        }
+      }
       DocumentSnapshot<Map<String, dynamic>> documentSnapshot =
           await FirebaseFirestore.instance
               .collection('orders')
@@ -140,25 +154,6 @@ class _MapOrderPageState extends State<MapOrderPage> {
         });
 
         // ดึง gpsLocation จาก collection Users ตาม Riderid
-        if (riderid != null) {
-          DocumentSnapshot<Map<String, dynamic>> riderDocumentSnapshot =
-              await FirebaseFirestore.instance
-                  .collection('Users')
-                  .doc(riderid)
-                  .get();
-
-          if (riderDocumentSnapshot.exists) {
-            final gpsLocation = riderDocumentSnapshot.data()?['gpsLocation'];
-            if (gpsLocation != null) {
-              double riderLat = gpsLocation['latitude'];
-              double riderLng = gpsLocation['longitude'];
-              start = LatLng(riderLat, riderLng); // กำหนดค่า location ของ rider
-              log('Rider Location: $start');
-            }
-          } else {
-            log("No such Rider document!");
-          }
-        }
       } else {
         log("No such document!");
       }
@@ -266,7 +261,7 @@ class _MapOrderPageState extends State<MapOrderPage> {
             child: ElevatedButton(
               onPressed: () {
                 comfrim();
-                log('รับของ');
+                log(status == 2 ? 'รับของ' : 'จัดส่ง');
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color.fromARGB(255, 18, 172, 82),
@@ -276,15 +271,17 @@ class _MapOrderPageState extends State<MapOrderPage> {
                   borderRadius: BorderRadius.circular(30),
                 ),
               ),
-              child: const Text(
-                'รับของ',
-                style: TextStyle(
+              child: Text(
+                status == '2'
+                    ? 'ดูรายละเอียดรับของ'
+                    : 'ดูรายละเอียดจัดส่ง', // เปลี่ยนข้อความตาม status
+                style: const TextStyle(
                   fontSize: 20, // ขนาดฟอนต์
                   color: Colors.white, // สีข้อความ
                 ),
               ),
             ),
-          ),
+          )
         ],
       ),
     );

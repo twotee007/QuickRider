@@ -149,18 +149,17 @@ class _HomeUserpageState extends State<HomeUserpage>
         return Column(
           children: [
             // ตรวจสอบว่ามีออเดอร์มากกว่า 1 หรือไม่
-            if (orders.length > 1)
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: ElevatedButton(
-                  onPressed: () {
-                    // กำหนดสิ่งที่ต้องการทำเมื่อกดปุ่ม
-                    log("ปุ่มถูกกด");
-                  },
-                  child:
-                      const Text('ดูตำแหน่ง Rider ทั้งหมดของสินค้าที่คุณส่ง'),
-                ),
+
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: ElevatedButton(
+                onPressed: () {
+                  // กำหนดสิ่งที่ต้องการทำเมื่อกดปุ่ม
+                  log("ปุ่มถูกกด");
+                },
+                child: const Text('ดูตำแหน่ง Rider ทั้งหมดของสินค้าที่คุณส่ง'),
               ),
+            ),
             Expanded(
               child: ListView.builder(
                 itemCount: orders.length,
@@ -226,18 +225,17 @@ class _HomeUserpageState extends State<HomeUserpage>
         return Column(
           children: [
             // ตรวจสอบว่ามีออเดอร์มากกว่า 1 หรือไม่
-            if (orders.length > 1)
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: ElevatedButton(
-                  onPressed: () {
-                    // สิ่งที่ต้องการทำเมื่อกดปุ่ม
-                    log("ปุ่มถูกกด");
-                  },
-                  child:
-                      const Text('ดูตำแหน่ง Rider ทั้งหมดของสินค้าที่คุณรับ'),
-                ),
+
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: ElevatedButton(
+                onPressed: () {
+                  // สิ่งที่ต้องการทำเมื่อกดปุ่ม
+                  log("ปุ่มถูกกด");
+                },
+                child: const Text('ดูตำแหน่ง Rider ทั้งหมดของสินค้าที่คุณรับ'),
               ),
+            ),
             Expanded(
               child: ListView.builder(
                 itemCount: orders.length,
