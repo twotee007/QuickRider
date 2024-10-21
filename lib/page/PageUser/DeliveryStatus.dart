@@ -28,7 +28,7 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
     super.initState();
     final Map<String, dynamic> args = Get.arguments as Map<String, dynamic>;
     orderId = args['orderId'] ?? 'Unknown orderId';
-    _fetchOrderData();
+    // _fetchOrderData();
     (orderId);
   }
 
@@ -87,67 +87,67 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
     }
   }
 
-  Future<void> _fetchOrderData() async {
-    try {
-      String userId = box.read('Userid');
-      // ดึงข้อมูลจาก Firestore ตาม orderId
-      DocumentSnapshot orderDoc = await FirebaseFirestore.instance
-          .collection('orders')
-          .doc(orderId)
-          .get();
+  // Future<void> _fetchOrderData() async {
+  //   try {
+  //     String userId = box.read('Userid');
+  //     // ดึงข้อมูลจาก Firestore ตาม orderId
+  //     DocumentSnapshot orderDoc = await FirebaseFirestore.instance
+  //         .collection('orders')
+  //         .doc(orderId)
+  //         .get();
 
-      // ตรวจสอบค่า senderPhoto, receiverId, และ status
-      if (orderDoc.exists) {
-        var data = orderDoc.data() as Map<String, dynamic>;
+  //     // ตรวจสอบค่า senderPhoto, receiverId, และ status
+  //     if (orderDoc.exists) {
+  //       var data = orderDoc.data() as Map<String, dynamic>;
 
-        // ตรวจสอบสถานะ
-        String status = data['status'];
+  //       // ตรวจสอบสถานะ
+  //       String status = data['status'];
 
-        // ถ้าเป็นผู้รับ
-        if (data['receiverId'] == userId) {
-          setState(() {
-            // เปลี่ยน currentUserId เป็น userId ของผู้ใช้ปัจจุบัน
-            isImageUploaded = true; // ถ้าเป็นผู้รับ จะไม่ให้แสดงปุ่ม
+  //       // ถ้าเป็นผู้รับ
+  //       if (data['receiverId'] == userId) {
+  //         setState(() {
+  //           // เปลี่ยน currentUserId เป็น userId ของผู้ใช้ปัจจุบัน
+  //           isImageUploaded = true; // ถ้าเป็นผู้รับ จะไม่ให้แสดงปุ่ม
 
-            // เปลี่ยนแปลงภาพตามสถานะ
-            if (status == '3') {
-              uploadedImageUrl = data['Photopickup']; // แสดงภาพจาก photopickup
-            } else if (status == '4') {
-              uploadedImageUrl =
-                  data['deliveredPhoto']; // แสดงภาพจาก deliveredPhoto
-            } else {
-              uploadedImageUrl =
-                  data['senderPhoto']; // ถ้าสถานะอื่นๆ ใช้ senderPhoto
-            }
-          });
-        } else {
-          // ถ้าไม่ใช่ผู้รับ ตรวจสอบค่า senderPhoto
-          if (data['senderPhoto'] != null) {
-            setState(() {
-              uploadedImageUrl = data['senderPhoto'];
-              isImageUploaded = true; // อัปเดตสถานะว่ามีการอัปโหลด
-              if (status == '3') {
-                uploadedImageUrl =
-                    data['Photopickup']; // แสดงภาพจาก photopickup
-              } else if (status == '4') {
-                uploadedImageUrl =
-                    data['deliveredPhoto']; // แสดงภาพจาก deliveredPhoto
-              } else {
-                uploadedImageUrl =
-                    data['senderPhoto']; // ถ้าสถานะอื่นๆ ใช้ senderPhoto
-              }
-            });
-          } else {
-            setState(() {
-              isImageUploaded = false; // ไม่มีการอัปโหลด
-            });
-          }
-        }
-      }
-    } catch (e) {
-      Get.snackbar('ข้อผิดพลาด', 'ไม่สามารถดึงข้อมูลได้: $e');
-    }
-  }
+  //           // เปลี่ยนแปลงภาพตามสถานะ
+  //           if (status == '3') {
+  //             uploadedImageUrl = data['Photopickup']; // แสดงภาพจาก photopickup
+  //           } else if (status == '4') {
+  //             uploadedImageUrl =
+  //                 data['deliveredPhoto']; // แสดงภาพจาก deliveredPhoto
+  //           } else {
+  //             uploadedImageUrl =
+  //                 data['senderPhoto']; // ถ้าสถานะอื่นๆ ใช้ senderPhoto
+  //           }
+  //         });
+  //       } else {
+  //         // ถ้าไม่ใช่ผู้รับ ตรวจสอบค่า senderPhoto
+  //         if (data['senderPhoto'] != null) {
+  //           setState(() {
+  //             uploadedImageUrl = data['senderPhoto'];
+  //             isImageUploaded = true; // อัปเดตสถานะว่ามีการอัปโหลด
+  //             if (status == '3') {
+  //               uploadedImageUrl =
+  //                   data['Photopickup']; // แสดงภาพจาก photopickup
+  //             } else if (status == '4') {
+  //               uploadedImageUrl =
+  //                   data['deliveredPhoto']; // แสดงภาพจาก deliveredPhoto
+  //             } else {
+  //               uploadedImageUrl =
+  //                   data['senderPhoto']; // ถ้าสถานะอื่นๆ ใช้ senderPhoto
+  //             }
+  //           });
+  //         } else {
+  //           setState(() {
+  //             isImageUploaded = false; // ไม่มีการอัปโหลด
+  //           });
+  //         }
+  //       }
+  //     }
+  //   } catch (e) {
+  //     Get.snackbar('ข้อผิดพลาด', 'ไม่สามารถดึงข้อมูลได้: $e');
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -645,7 +645,7 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
                           ),
                 SizedBox(height: 10),
                 // แสดงปุ่มเพิ่มรูปภาพเฉพาะเมื่อไม่ใช่ผู้รับและไม่มีการอัปโหลดภาพใดๆ
-                !isImageUploaded && !isReceiver
+                !isImageUploaded && !isReceiver && status != '2'
                     ? Align(
                         alignment: Alignment.center,
                         child: ElevatedButton(
