@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:quickrider/config/shared/appData.dart';
@@ -237,6 +238,7 @@ class _JobdscriptionriderPageState extends State<JobdscriptionriderPage> {
                                   const SizedBox(height: 20),
                                   ElevatedButton(
                                     onPressed: () {
+                                      _checkPermissions();
                                       Get.to(() => const MapOrderPage(),
                                           transition:
                                               Transition.rightToLeftWithFade,
@@ -325,6 +327,24 @@ class _JobdscriptionriderPageState extends State<JobdscriptionriderPage> {
       }
     } catch (e) {
       log('เกิดข้อผิดพลาดในการดึงข้อมูล: $e');
+    }
+  }
+
+  Future<void> _checkPermissions() async {
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        // Handle permission denied scenario
+        log("Location permissions are denied");
+        return;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      // Handle the case when the user denied permissions forever
+      log("Location permissions are permanently denied");
+      return;
     }
   }
 }

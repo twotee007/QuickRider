@@ -1,10 +1,16 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:provider/provider.dart';
+import 'package:quickrider/config/shared/appData.dart';
 import 'package:quickrider/page/PageRider/PhotostatusRider.dart';
 import 'package:quickrider/page/PageRider/RiderService.dart';
 import 'package:quickrider/page/PageRider/widgetRider.dart';
@@ -21,16 +27,144 @@ class _MapOrderPageState extends State<MapOrderPage> {
   final riderService = Get.find<RiderService>();
   final MapController _mapController = MapController();
   List<LatLng> routePoints = [];
-
+  String orderid = '';
+  String status = ''; // สถานะสินค้า
   // จุดเริ่มต้นและจุดสิ้นสุด
-  LatLng start = const LatLng(13.7563, 100.5018); // Bangkok
-  LatLng end = const LatLng(13.7563, 100.5018); // Another point in Bangkok
+  double currentZoom = 16.0;
+  LatLng start = LatLng(37.29228362890773, -121.98843719179415); // Bangkok
+  LatLng end = LatLng(13.7563, 100.5018); // เปลี่ยนจาก const เป็น LatLng ปกติ
+  StreamSubscription<Position>? _positionStreamSubscription;
+  final box = GetStorage();
 
   @override
   void initState() {
     super.initState();
+    orderid = context.read<AppData>().order.orderId;
+    log(orderid);
+    _trackLocation();
+    _getOrderStatus();
+  }
 
-    _getRoute();
+  void _stopTrackingLocation() {
+    _positionStreamSubscription?.cancel(); // Cancel the stream if it's active
+    _positionStreamSubscription = null;
+    log("StopRealtime Tracking stopped");
+  }
+
+  Future<void> _trackLocation() async {
+    String riderid = box.read('Riderid');
+    // รับตำแหน่งปัจจุบันก่อนที่จะเริ่มการติดตาม
+    if (context.read<AppData>().listener != null) {
+      context.read<AppData>().listener!.cancel();
+      context.read<AppData>().listener = null;
+    }
+    Position position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+
+    // อัปเดตตำแหน่งเริ่มต้นด้วยตำแหน่งปัจจุบัน
+    start = LatLng(position.latitude, position.longitude);
+
+    // แสดงตำแหน่งเริ่มต้นบนแผนที่
+    _mapController.move(start, currentZoom);
+    // เริ่มการติดตามตำแหน่ง
+    context.read<AppData>().listener = Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 0, // อัปเดตทุกๆ 1 เมตร
+      ),
+    ).listen((Position position) {
+      setState(() {
+        start = LatLng(position.latitude, position.longitude);
+      });
+
+      // ย้ายแผนที่ไปยังตำแหน่งใหม่
+      updateRiderLocation(riderid, start);
+      // ดึงเส้นทางใหม่เมื่อเปลี่ยนตำแหน่ง
+      _getRoute();
+
+      log("startRealtime Current position: $start");
+    });
+  }
+
+  Future<void> updateRiderLocation(String riderId, LatLng location) async {
+    final riderRef =
+        FirebaseFirestore.instance.collection('Users').doc(riderId);
+
+    await riderRef.update({
+      'gpsLocation': {
+        'latitude': location.latitude,
+        'longitude': location.longitude,
+      },
+    }).catchError((error) {
+      log("Error updating rider location: $error");
+    });
+  }
+
+  Future<void> _getOrderStatus() async {
+    String riderid = box.read('Riderid');
+    try {
+      DocumentSnapshot<Map<String, dynamic>> documentSnapshot =
+          await FirebaseFirestore.instance
+              .collection('orders')
+              .doc(orderid)
+              .get();
+
+      if (documentSnapshot.exists) {
+        setState(() {
+          status =
+              documentSnapshot.data()?['status']; // ดึง status จาก Firestore
+          log('Status: $status');
+
+          // ตรวจสอบค่า status ว่าเป็น 2 หรือ 3
+          if (status == '2') {
+            // ถ้า status เป็น 2 ให้ดึง pickupLocation และใช้กับ LatLng
+            final pickupLocation = documentSnapshot.data()?['pickupLocation'];
+            if (pickupLocation != null) {
+              double pickupLat = pickupLocation['latitude'];
+              double pickupLng = pickupLocation['longitude'];
+              end = LatLng(pickupLat, pickupLng); // กำหนดค่า end ใหม่
+              log('Updated End Location (Pickup): $end');
+            }
+          } else if (status == '3') {
+            // ถ้า status เป็น 3 ให้ดึง deliveryLocation และใช้กับ LatLng
+            final deliveryLocation =
+                documentSnapshot.data()?['deliveryLocation'];
+            if (deliveryLocation != null) {
+              double deliveryLat = deliveryLocation['latitude'];
+              double deliveryLng = deliveryLocation['longitude'];
+              end = LatLng(deliveryLat, deliveryLng); // กำหนดค่า end ใหม่
+              log('Updated End Location (Delivery): $end');
+            }
+          }
+        });
+
+        // ดึง gpsLocation จาก collection Users ตาม Riderid
+        if (riderid != null) {
+          DocumentSnapshot<Map<String, dynamic>> riderDocumentSnapshot =
+              await FirebaseFirestore.instance
+                  .collection('Users')
+                  .doc(riderid)
+                  .get();
+
+          if (riderDocumentSnapshot.exists) {
+            final gpsLocation = riderDocumentSnapshot.data()?['gpsLocation'];
+            if (gpsLocation != null) {
+              double riderLat = gpsLocation['latitude'];
+              double riderLng = gpsLocation['longitude'];
+              start = LatLng(riderLat, riderLng); // กำหนดค่า location ของ rider
+              log('Rider Location: $start');
+            }
+          } else {
+            log("No such Rider document!");
+          }
+        }
+      } else {
+        log("No such document!");
+      }
+    } catch (e) {
+      log("Error fetching document: $e");
+    }
   }
 
   Future<void> _getRoute() async {
@@ -44,7 +178,6 @@ class _MapOrderPageState extends State<MapOrderPage> {
       if (data['routes'].isNotEmpty) {
         final List<dynamic> coordinates =
             data['routes'][0]['geometry']['coordinates'];
-
         final List<LatLng> points =
             coordinates.map((coord) => LatLng(coord[1], coord[0])).toList();
 
@@ -52,7 +185,7 @@ class _MapOrderPageState extends State<MapOrderPage> {
           routePoints = points;
         });
       } else {
-        print("ไม่มีเส้นทางที่สามารถใช้งานได้");
+        print("No available route");
       }
     } else {
       print("Error in API response");
@@ -158,67 +291,15 @@ class _MapOrderPageState extends State<MapOrderPage> {
   }
 
   void comfrim() {
-    Get.dialog(
-      AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15),
-        ),
-        title: const Text(
-          'ยืนยันการรับสินค้า',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF412160),
-          ),
-        ),
-        content: const Text(
-          'คุณแน่ใจว่าคุณรับสินค้าแล้ว?',
-          style: TextStyle(
-            fontSize: 16,
-            color: Colors.black,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Get.back(); // Close the dialog without doing anything
-            },
-            child: const Text(
-              'ยกเลิก',
-              style: TextStyle(
-                fontSize: 16,
-                color: Color(0xFF412160),
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              Get.back(); // Close the dialog
-              Get.to(
-                () => const PhotostatusriderPage(),
-                transition: Transition.rightToLeftWithFade,
-                duration: const Duration(milliseconds: 300),
-              );
-            },
-            child: const Text(
-              'รับสินค้า',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-            style: TextButton.styleFrom(
-              backgroundColor: const Color.fromARGB(255, 18, 172, 82),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          ),
-        ],
-      ),
-      barrierDismissible:
-          false, // Prevents closing the dialog by tapping outside
+    if (context.read<AppData>().listener != null) {
+      log('Stop Real Time Location');
+      context.read<AppData>().listener!.cancel();
+      context.read<AppData>().listener = null;
+    }
+    Get.to(
+      () => const PhotostatusriderPage(),
+      transition: Transition.rightToLeftWithFade,
+      duration: const Duration(milliseconds: 300),
     );
   }
 }

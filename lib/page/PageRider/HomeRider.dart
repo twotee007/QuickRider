@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -265,6 +266,12 @@ class _HomeRiderPageState extends State<HomeRiderPage>
                       ),
                       ElevatedButton(
                         onPressed: () {
+                          _checkPermissions();
+                          if (context.read<AppData>().listener != null) {
+                            context.read<AppData>().listener!.cancel();
+                            context.read<AppData>().listener = null;
+                            log('Stop real Time');
+                          }
                           context.read<AppData>().order.orderId = orderId;
                           context.read<AppData>().order.senderId = senderId;
                           context.read<AppData>().order.receiverId = receiverId;
@@ -397,5 +404,23 @@ class _HomeRiderPageState extends State<HomeRiderPage>
         });
       }
     }, onError: (error) => log("Listen failed: $error"));
+  }
+
+  Future<void> _checkPermissions() async {
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        // Handle permission denied scenario
+        log("Location permissions are denied");
+        return;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      // Handle the case when the user denied permissions forever
+      log("Location permissions are permanently denied");
+      return;
+    }
   }
 }

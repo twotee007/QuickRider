@@ -2,8 +2,10 @@ import 'dart:developer';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:quickrider/page/PageRider/MapOrderRider.dart';
 import 'package:quickrider/page/PageRider/RiderService.dart';
 import 'package:quickrider/page/PageRider/widgetRider.dart';
 
@@ -231,6 +233,12 @@ class _PhotostatusriderPageState extends State<PhotostatusriderPage> {
                           const EdgeInsets.all(16.0), // เพิ่ม Padding รอบปุ่ม
                       child: ElevatedButton(
                         onPressed: () {
+                          _checkPermissions();
+                          Get.to(
+                            () => const MapOrderPage(),
+                            transition: Transition.rightToLeftWithFade,
+                            duration: const Duration(milliseconds: 300),
+                          );
                           log('รับของ');
                         },
                         style: ElevatedButton.styleFrom(
@@ -259,5 +267,25 @@ class _PhotostatusriderPageState extends State<PhotostatusriderPage> {
         ],
       ),
     );
+  }
+
+  Future<void> _checkPermissions() async {
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        // Handle permission denied scenario
+        log("Location permissions are denied");
+        return;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      // Handle the case when the user denied permissions forever
+      log("Location permissions are permanently denied");
+      return;
+    }
+
+    // Start tracking location if permissions are granted
   }
 }
