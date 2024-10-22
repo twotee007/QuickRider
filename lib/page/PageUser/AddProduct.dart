@@ -5,10 +5,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 
 import 'package:image_picker/image_picker.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:quickrider/page/PageUser/HomeUser.dart';
 import 'package:quickrider/page/PageUser/SharedWidget.dart';
 import 'package:quickrider/page/PageUser/UserService.dart';
@@ -38,6 +40,9 @@ class _AddProductPageState extends State<AddProductPage> {
   final FirebaseFirestore db = FirebaseFirestore.instance;
   late Future<void> loadDate;
   late Map<String, dynamic>? user;
+  MapController mapController1 = MapController();
+  double? deliveryLatitude;
+  double? deliveryLongitude;
 
   @override
   void initState() {
@@ -114,33 +119,73 @@ class _AddProductPageState extends State<AddProductPage> {
       if (input.isEmpty) {
         _filteredPhones.clear();
         _shippingAddressController.clear();
+        // รีเซ็ตค่าพิกัดเมื่อลบเบอร์
+        deliveryLatitude = null;
+        deliveryLongitude = null;
       } else {
-        _filteredPhones =
-            _databasePhones.where((phone) => phone.startsWith(input)).toList();
+        _filteredPhones = _databasePhones
+            .where((phone) => phone.toLowerCase().contains(input.toLowerCase()))
+            .toList();
       }
     });
   }
 
   Future<void> _fetchUserAddress(String phone) async {
     try {
-      DocumentSnapshot snapshot = await FirebaseFirestore.instance
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
           .collection('Users')
           .where('phone', isEqualTo: phone)
           .limit(1)
-          .get()
-          .then((querySnapshot) => querySnapshot.docs.first);
+          .get();
 
-      if (snapshot.exists) {
-        String address =
-            snapshot['address'] as String; // สมมติว่า field ชื่อ 'address'
-        // ทำอะไรกับที่อยู่ที่ดึงมา เช่น แสดงใน UI
-        setState(() {
-          _shippingAddressController.text = address; // กรอกที่อยู่ใน TextField
-        });
+      if (querySnapshot.docs.isNotEmpty) {
+        DocumentSnapshot snapshot = querySnapshot.docs.first;
+
+        // ตรวจสอบว่ามีข้อมูลที่จำเป็นครบถ้วน
+        if (snapshot.exists &&
+            snapshot.data() != null &&
+            (snapshot.data() as Map<String, dynamic>).containsKey('address') &&
+            (snapshot.data() as Map<String, dynamic>)
+                .containsKey('gpsLocation')) {
+          String address = snapshot['address'] as String;
+          Map<String, dynamic> gpsLocation =
+              snapshot['gpsLocation'] as Map<String, dynamic>;
+
+          setState(() {
+            _shippingAddressController.text = address;
+            deliveryLatitude = gpsLocation['latitude'];
+            deliveryLongitude = gpsLocation['longitude'];
+
+            // เลื่อนแผนที่ไปยังตำแหน่งใหม่ถ้ามีการแสดงแผนที่อยู่
+            if (mapController1 != null &&
+                deliveryLatitude != null &&
+                deliveryLongitude != null) {
+              mapController1.move(
+                LatLng(deliveryLatitude!, deliveryLongitude!),
+                13.0,
+              );
+            }
+          });
+        } else {
+          print('Missing required data in document');
+          _resetAddressData();
+        }
+      } else {
+        print('No user found with this phone number');
+        _resetAddressData();
       }
     } catch (e) {
       print('Error fetching user address: $e');
+      _resetAddressData();
     }
+  }
+
+  void _resetAddressData() {
+    setState(() {
+      _shippingAddressController.text = '';
+      deliveryLatitude = null;
+      deliveryLongitude = null;
+    });
   }
 
   void _selectPhoneNumber(String phone) {
@@ -306,13 +351,54 @@ class _AddProductPageState extends State<AddProductPage> {
 
                               _buildTextField('ที่อยู่จัดส่งที่:',
                                   _shippingAddressController),
+                              const SizedBox(height: 20),
+
+// เพิ่มส่วนแสดงแผนที่
+                              if (deliveryLatitude != null &&
+                                  deliveryLongitude !=
+                                      null) // เช็คว่ามีพิกัดแล้วหรือยัง
+                                Container(
+                                  height: 200,
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: FlutterMap(
+                                    mapController:
+                                        mapController1, // ใช้ mapController1 ตามที่ประกาศไว้
+                                    options: MapOptions(
+                                      initialCenter: LatLng(deliveryLatitude!,
+                                          deliveryLongitude!),
+                                      initialZoom: 13.0,
+                                    ),
+                                    children: [
+                                      TileLayer(
+                                        urlTemplate:
+                                            'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                        subdomains: const ['a', 'b', 'c'],
+                                      ),
+                                      MarkerLayer(
+                                        markers: [
+                                          Marker(
+                                            point: LatLng(deliveryLatitude!,
+                                                deliveryLongitude!),
+                                            width: 40,
+                                            height: 40,
+                                            child: const Icon(
+                                              Icons.location_on,
+                                              color: Colors.red,
+                                              size: 40,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               const SizedBox(height: 30),
+
                               Container(
-                                margin: const EdgeInsets.symmetric(
-                                    vertical: 20), // ระยะห่างแนวตั้ง
-                                height: 5, // ความสูงของเส้น
-                                color: const Color.fromARGB(
-                                    255, 59, 0, 102), // สีของเส้น
+                                margin:
+                                    const EdgeInsets.symmetric(vertical: 20),
+                                height: 5,
+                                color: const Color.fromARGB(255, 59, 0, 102),
                               ),
 
                               // แสดงรายการสินค้าพร้อมปุ่มลบ
