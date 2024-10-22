@@ -374,6 +374,17 @@ class _UserSignupState extends State<UserSignup> {
                             context.read<AppData>().longitude =
                                 initialLatLng.longitude;
                             Navigator.of(context).pop(); // ปิดหน้าต่างป๊อปอัพ
+
+                            // แสดง Snackbar แจ้งเตือนด้วย Get.snackbar
+                            Get.snackbar(
+                              'เก็บโลเคชั่นของคุณเรียบร้อยแล้ว',
+                              'latitude: ${initialLatLng.latitude}, longitude: ${initialLatLng.longitude}',
+                              snackPosition: SnackPosition.BOTTOM,
+                              backgroundColor: Colors.green,
+                              colorText: Colors.white,
+                              duration: const Duration(
+                                  seconds: 3), // ระยะเวลาที่ Snackbar จะแสดง
+                            );
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF412160),
