@@ -6,6 +6,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:quickrider/config/shared/appData.dart';
@@ -38,6 +39,7 @@ class _PhotostatusriderPageState extends State<PhotostatusriderPage> {
   String status = '';
   String textstatus = '';
   String text = '';
+  final box = GetStorage();
   late Future<void> loadData;
   @override
   void initState() {
@@ -45,6 +47,11 @@ class _PhotostatusriderPageState extends State<PhotostatusriderPage> {
     orderid = context.read<AppData>().order.orderId;
     senderId = context.read<AppData>().order.senderId;
     receiverId = context.read<AppData>().order.receiverId;
+    if (orderid.isEmpty || senderId.isEmpty || receiverId.isEmpty) {
+      orderid = box.read('orderId');
+      senderId = box.read('senderId');
+      receiverId = box.read('receiverId');
+    }
     log('orderid : $orderid');
     log('senderId : $senderId');
     log('receiverId : $receiverId');
@@ -408,28 +415,25 @@ class _PhotostatusriderPageState extends State<PhotostatusriderPage> {
 
   void submit() async {
     _checkPermissions();
-
+    String riderId = box.read('Riderid');
     if (imageFile == null) {
-      // No image selected, show an error message
       Get.snackbar(
-        'ข้อผิดพลาด', // หัวข้อ
+        'ข้อผิดพลาด',
         'กรุณา$textstatus',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
         duration: const Duration(seconds: 3),
       );
-      return; // Stop further execution if there's no image
+      return;
     }
 
-    // Show loading dialog
     showDialog(
       context: Get.context!,
-      barrierDismissible: false, // Prevent dismissing while loading
+      barrierDismissible: false,
       builder: (BuildContext context) {
         return const Center(
-          child:
-              CircularProgressIndicator(), // Show circular progress indicator
+          child: CircularProgressIndicator(),
         );
       },
     );
@@ -438,8 +442,24 @@ class _PhotostatusriderPageState extends State<PhotostatusriderPage> {
       FirebaseStorage storage = FirebaseStorage.instance;
       FirebaseFirestore firestore = FirebaseFirestore.instance;
 
+      // Check if order exists
+      DocumentSnapshot doc =
+          await firestore.collection('orders').doc(orderid).get();
+      if (!doc.exists) {
+        log('Order with ID $orderid not found');
+        Get.back();
+        Get.snackbar(
+          'Error',
+          'Order not found',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        return;
+      }
+
       if (status == '2') {
-        // Upload image for Photopickup
+        // Upload image for Photopickup and update Firestore
         String fileName = '${const Uuid().v4()}.jpg';
         String filePath = 'orders_status/$fileName';
         Reference storageRef = storage.ref().child(filePath);
@@ -447,7 +467,6 @@ class _PhotostatusriderPageState extends State<PhotostatusriderPage> {
         TaskSnapshot snapshot = await uploadTask;
         String downloadUrl = await snapshot.ref.getDownloadURL();
 
-        // Update Firestore with Photopickup and status 3
         await firestore.collection('orders').doc(orderid).update({
           'Photopickup': downloadUrl,
           'status': '3',
@@ -455,12 +474,11 @@ class _PhotostatusriderPageState extends State<PhotostatusriderPage> {
 
         log('Image uploaded and order updated successfully for status 2');
         Get.back();
-
         Get.to(() => const MapOrderPage(),
             transition: Transition.rightToLeftWithFade,
             duration: const Duration(milliseconds: 300));
       } else if (status == '3') {
-        // Upload image for deliveredPhoto
+        // Upload image for deliveredPhoto and update Firestore
         String fileName = '${const Uuid().v4()}.jpg';
         String filePath = 'orders_status/$fileName';
         Reference storageRef = storage.ref().child(filePath);
@@ -468,23 +486,25 @@ class _PhotostatusriderPageState extends State<PhotostatusriderPage> {
         TaskSnapshot snapshot = await uploadTask;
         String downloadUrl = await snapshot.ref.getDownloadURL();
 
-        // Update Firestore with deliveredPhoto and status 4
         await firestore.collection('orders').doc(orderid).update({
           'deliveredPhoto': downloadUrl,
           'status': '4',
         });
 
+        await firestore.collection('Users').doc(riderId).update({
+          'currentJob': '0',
+        });
+
         log('Image uploaded and order updated successfully for status 3');
         Get.back();
-
-        // Navigate to home after successful update
+        box.remove('orderId');
+        box.remove('senderId');
+        box.remove('receiverId');
         Get.offAll(() => const HomeRiderPage());
-        return;
       }
     } catch (e) {
       log('Error uploading image or updating order: $e');
-      Navigator.pop(context); // Close loading dialog in case of error
-      // Show error message to the user
+      Get.back();
       Get.snackbar(
         'Error',
         'Failed to upload image and update order',
@@ -492,7 +512,6 @@ class _PhotostatusriderPageState extends State<PhotostatusriderPage> {
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
-      return; // Stop further execution in case of error
     }
   }
 

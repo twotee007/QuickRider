@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:quickrider/page/Login.dart';
 import 'package:quickrider/page/PageRider/HomeRider.dart';
+import 'package:quickrider/page/PageRider/MapOrderRider.dart';
 import 'package:quickrider/page/PageUser/HomeUser.dart';
 import 'package:quickrider/page/PageUser/UserService.dart';
 
@@ -36,12 +37,16 @@ class _ScreenPageState extends State<ScreenPage>
     bool isLoggedIn = box.read('isLoggedIn') ?? false;
     String? userid = box.read('Userid');
     String? riderid = box.read('Riderid');
+    String? orderId = box.read('orderId');
     // ค่าเริ่มต้นเป็น false ถ้ายังไม่เคยล็อกอิน
     Future.delayed(Duration(seconds: 2), () {
       if (isLoggedIn) {
         if (riderid != null) {
-          // ถ้าเคยล็อกอินแล้ว และ riderid มีค่า
-          Get.off(() => const HomeRiderPage());
+          if (orderId != null) {
+            Get.off(() => const MapOrderPage());
+          } else {
+            Get.off(() => const HomeRiderPage());
+          }
         } else if (userid != null) {
           // ถ้าเคยล็อกอินแล้ว และ userid มีค่า
           Get.off(() => const HomeUserpage());

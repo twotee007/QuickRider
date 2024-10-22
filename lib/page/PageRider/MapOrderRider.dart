@@ -40,6 +40,9 @@ class _MapOrderPageState extends State<MapOrderPage> {
   void initState() {
     super.initState();
     orderid = context.read<AppData>().order.orderId;
+    if (orderid.isEmpty) {
+      orderid = box.read('orderId');
+    }
     log(orderid);
     _trackLocation();
     _getOrderStatus();

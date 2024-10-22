@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import 'package:quickrider/config/shared/appData.dart';
@@ -29,6 +30,7 @@ class _JobdscriptionriderPageState extends State<JobdscriptionriderPage> {
   late String senderId;
   late String receiverId;
   late Future<void> loadData;
+  final box = GetStorage();
   String photo = '';
   String productName = '';
   String description = '';
@@ -413,6 +415,7 @@ class _JobdscriptionriderPageState extends State<JobdscriptionriderPage> {
   }
 
   void submit() async {
+    String riderid = box.read('Riderid');
     showDialog(
       context: Get.context!,
       barrierDismissible: false, // Prevent dismissing while loading
@@ -425,9 +428,18 @@ class _JobdscriptionriderPageState extends State<JobdscriptionriderPage> {
     );
     _checkPermissions();
     FirebaseFirestore firestore = FirebaseFirestore.instance;
-    await firestore.collection('orders').doc(orderId).update({
-      'status': '2',
-    });
+    await firestore
+        .collection('orders')
+        .doc(orderId)
+        .update({'status': '2', 'riderId': riderid});
+    FirebaseFirestore firestoreUser = FirebaseFirestore.instance;
+    await firestoreUser
+        .collection('Users')
+        .doc(riderid)
+        .update({'currentJob': '1'});
+    box.write('orderId', orderId);
+    box.write('senderId', senderId);
+    box.write('receiverId', receiverId);
     Get.back();
     Get.to(() => const MapOrderPage(),
         transition: Transition.rightToLeftWithFade,

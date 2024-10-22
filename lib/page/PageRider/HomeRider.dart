@@ -24,6 +24,8 @@ class _HomeRiderPageState extends State<HomeRiderPage>
     with TickerProviderStateMixin {
   int _selectedIndex = 0;
   List<Map<String, dynamic>> ordersList = [];
+  final box = GetStorage();
+
   bool isLoading = true; // ตัวแปรสำหรับสถานะการโหลด
   void _onItemTapped(int index) {
     setState(() {
@@ -266,6 +268,7 @@ class _HomeRiderPageState extends State<HomeRiderPage>
                       ),
                       ElevatedButton(
                         onPressed: () {
+                          submit(orderId);
                           if (context.read<AppData>().listener != null) {
                             context.read<AppData>().listener!.cancel();
                             context.read<AppData>().listener = null;
@@ -274,7 +277,9 @@ class _HomeRiderPageState extends State<HomeRiderPage>
                           context.read<AppData>().order.orderId = orderId;
                           context.read<AppData>().order.senderId = senderId;
                           context.read<AppData>().order.receiverId = receiverId;
-                          submit(orderId);
+                          box.write('orderId', orderId);
+                          box.write('senderId', senderId);
+                          box.write('receiverId', receiverId);
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor:
@@ -322,7 +327,7 @@ class _HomeRiderPageState extends State<HomeRiderPage>
 
   void startRealtimeGetOrders() {
     final collectionRef = FirebaseFirestore.instance.collection('orders');
-
+    ordersList.clear(); // ล้างรายการก่อน
     if (context.read<AppData>().listener != null) {
       context.read<AppData>().listener!.cancel();
       context.read<AppData>().listener = null;
@@ -396,6 +401,12 @@ class _HomeRiderPageState extends State<HomeRiderPage>
   }
 
   void submit(String orderid) async {
+    String riderid = box.read('Riderid');
+    FirebaseFirestore firestore = FirebaseFirestore.instance;
+    await firestore
+        .collection('orders')
+        .doc(orderid)
+        .update({'status': '2', 'riderId': riderid});
     showDialog(
       context: Get.context!,
       barrierDismissible: false, // Prevent dismissing while loading
@@ -407,10 +418,11 @@ class _HomeRiderPageState extends State<HomeRiderPage>
       },
     );
     _checkPermissions();
-    FirebaseFirestore firestore = FirebaseFirestore.instance;
-    await firestore.collection('orders').doc(orderid).update({
-      'status': '2',
-    });
+    FirebaseFirestore firestoreUser = FirebaseFirestore.instance;
+    await firestoreUser
+        .collection('Users')
+        .doc(riderid)
+        .update({'currentJob': '1'});
     Get.back();
     Get.to(() => const MapOrderPage(),
         transition: Transition.rightToLeftWithFade,
