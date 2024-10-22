@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:quickrider/page/ChangePage/NavigationBarUser.dart';
 import 'package:quickrider/page/PageUser/AddProduct.dart';
 import 'package:quickrider/page/PageUser/DeliveryStatus.dart';
+import 'package:quickrider/page/PageUser/MapScreen.dart';
 import 'package:quickrider/page/PageUser/SharedWidget.dart';
 import 'package:quickrider/page/PageUser/UserService.dart';
 import 'package:uuid/uuid.dart';
@@ -154,7 +155,12 @@ class _HomeUserpageState extends State<HomeUserpage>
               padding: const EdgeInsets.all(8.0),
               child: ElevatedButton(
                 onPressed: () {
-                  // กำหนดสิ่งที่ต้องการทำเมื่อกดปุ่ม
+                  Get.to(() => const MapscreenPage(),
+                      arguments: {
+                        'senderId': userId,
+                      },
+                      transition: Transition.rightToLeft,
+                      duration: const Duration(milliseconds: 300));
                   log("ปุ่มถูกกด");
                 },
                 child: const Text('ดูตำแหน่ง Rider ทั้งหมดของสินค้าที่คุณส่ง'),
@@ -230,7 +236,12 @@ class _HomeUserpageState extends State<HomeUserpage>
               padding: const EdgeInsets.all(8.0),
               child: ElevatedButton(
                 onPressed: () {
-                  // สิ่งที่ต้องการทำเมื่อกดปุ่ม
+                  Get.to(() => const MapscreenPage(),
+                      arguments: {
+                        'receiverId': userId,
+                      },
+                      transition: Transition.rightToLeft,
+                      duration: const Duration(milliseconds: 300));
                   log("ปุ่มถูกกด");
                 },
                 child: const Text('ดูตำแหน่ง Rider ทั้งหมดของสินค้าที่คุณรับ'),
