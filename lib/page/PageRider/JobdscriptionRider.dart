@@ -415,35 +415,70 @@ class _JobdscriptionriderPageState extends State<JobdscriptionriderPage> {
   }
 
   void submit() async {
-    String riderid = box.read('Riderid');
-    showDialog(
-      context: Get.context!,
-      barrierDismissible: false, // Prevent dismissing while loading
-      builder: (BuildContext context) {
-        return const Center(
-          child:
-              CircularProgressIndicator(), // Show circular progress indicator
-        );
-      },
-    );
-    _checkPermissions();
+    String riderId = box.read('Riderid');
     FirebaseFirestore firestore = FirebaseFirestore.instance;
-    await firestore
-        .collection('orders')
-        .doc(orderId)
-        .update({'status': '2', 'riderId': riderid});
-    FirebaseFirestore firestoreUser = FirebaseFirestore.instance;
-    await firestoreUser
-        .collection('Users')
-        .doc(riderid)
-        .update({'currentJob': '1'});
-    box.write('orderId', orderId);
-    box.write('senderId', senderId);
-    box.write('receiverId', receiverId);
-    Get.back();
-    Get.to(() => const MapOrderPage(),
-        transition: Transition.rightToLeftWithFade,
-        duration: const Duration(milliseconds: 300));
+
+    try {
+      // เริ่ม Firebase Transaction
+      await firestore.runTransaction((transaction) async {
+        DocumentReference orderRef =
+            firestore.collection('orders').doc(orderId);
+
+        // ดึงข้อมูลออเดอร์แบบ transaction
+        DocumentSnapshot snapshot = await transaction.get(orderRef);
+
+        if (!snapshot.exists) {
+          throw Exception("ไม่พบออเดอร์นี้");
+        }
+
+        Map<String, dynamic> orderData =
+            snapshot.data() as Map<String, dynamic>;
+        // ตรวจสอบว่าออเดอร์นี้ยังไม่มีใครรับ
+        String cheack = orderData['riderId'];
+        if (cheack.isEmpty) {
+          // อัปเดตสถานะและ riderId ใน transaction
+          transaction.update(orderRef, {
+            'status': '2', // เปลี่ยนสถานะเป็นรับงานแล้ว
+            'riderId': riderId, // กำหนด riderId ของไรเดอร์ที่รับงาน
+          });
+        } else {
+          throw Exception("งานนี้มีไรเดอร์รับไปแล้ว");
+        }
+      });
+
+      // แสดง Dialog ขณะโหลด
+      showDialog(
+        context: Get.context!,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return const Center(
+            child: CircularProgressIndicator(), // วงกลมหมุนขณะโหลด
+          );
+        },
+      );
+
+      // ตรวจสอบสิทธิ์ของผู้ใช้
+      _checkPermissions();
+
+      // อัปเดตข้อมูลของไรเดอร์ว่ากำลังทำงาน
+      await firestore
+          .collection('Users')
+          .doc(riderId)
+          .update({'currentJob': '1'});
+
+      // ปิด dialog หลังจากทำเสร็จ
+      Get.back();
+
+      // นำผู้ใช้ไปยังหน้า MapOrderPage
+      Get.to(() => const MapOrderPage(),
+          transition: Transition.rightToLeftWithFade,
+          duration: const Duration(milliseconds: 300));
+    } catch (e) {
+      log('ไม่สามารถรับงานได้: $e');
+      // สามารถแจ้งเตือนให้ผู้ใช้ทราบเมื่อเกิดข้อผิดพลาด
+      Get.snackbar('Error', e.toString(),
+          backgroundColor: Colors.red, colorText: Colors.white);
+    }
   }
 
   Future<void> _checkPermissions() async {
