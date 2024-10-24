@@ -269,11 +269,6 @@ class _HomeRiderPageState extends State<HomeRiderPage>
                       ElevatedButton(
                         onPressed: () {
                           submit(orderId);
-                          if (context.read<AppData>().listener != null) {
-                            context.read<AppData>().listener!.cancel();
-                            context.read<AppData>().listener = null;
-                            log('Stop real Time');
-                          }
                           context.read<AppData>().order.orderId = orderId;
                           context.read<AppData>().order.senderId = senderId;
                           context.read<AppData>().order.receiverId = receiverId;
@@ -419,9 +414,9 @@ class _HomeRiderPageState extends State<HomeRiderPage>
 
         Map<String, dynamic> orderData =
             snapshot.data() as Map<String, dynamic>;
-
         // ตรวจสอบว่าออเดอร์นี้ยังไม่มีใครรับ
-        if (orderData['riderId'] == null) {
+        String cheack = orderData['riderId'];
+        if (cheack.isEmpty) {
           // อัปเดตสถานะและ riderId ใน transaction
           transaction.update(orderRef, {
             'status': '2', // เปลี่ยนสถานะเป็นรับงานแล้ว
@@ -454,7 +449,11 @@ class _HomeRiderPageState extends State<HomeRiderPage>
 
       // ปิด dialog หลังจากทำเสร็จ
       Get.back();
-
+      if (context.read<AppData>().listener != null) {
+        context.read<AppData>().listener!.cancel();
+        context.read<AppData>().listener = null;
+        log('Stop real Time');
+      }
       // นำผู้ใช้ไปยังหน้า MapOrderPage
       Get.to(() => const MapOrderPage(),
           transition: Transition.rightToLeftWithFade,
