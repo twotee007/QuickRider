@@ -39,9 +39,9 @@ class _MapscreenPageState extends State<MapscreenPage> {
     bool receiverId =
         box.read('receiverId') == true; // ถ้าไม่ใช่ true จะเป็น false
 
-    if (!senderId) {
+    if (senderId) {
       textfirebase = 'senderId';
-    } else if (!receiverId) {
+    } else if (receiverId) {
       textfirebase = 'receiverId';
     }
     _listenToRidersLocation();

@@ -263,14 +263,16 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
                 bool receiverId = box.read('receiverId') ==
                     true; // ถ้าไม่ใช่ true จะเป็น false
 
-                if (!senderId) {
+                if (senderId) {
                   Get.to(() => MapscreenPage(),
                       transition: Transition.rightToLeft,
                       duration: const Duration(milliseconds: 300));
-                } else if (!receiverId) {
+                } else if (receiverId) {
                   Get.to(() => MapscreenPage(),
                       transition: Transition.rightToLeft,
                       duration: const Duration(milliseconds: 300));
+                } else {
+                  Get.back(); // ย้อนกลับไปยังหน้าที่ผ่านมา
                 }
               },
             ),
