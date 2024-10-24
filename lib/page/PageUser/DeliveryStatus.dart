@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:quickrider/page/PageUser/MapScreen.dart';
 
 class DeliveryStatusScreen extends StatefulWidget {
   @override
@@ -256,7 +257,22 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
           children: [
             IconButton(
               icon: Icon(Icons.arrow_back, color: Colors.black),
-              onPressed: () => Navigator.pop(context),
+              onPressed: () {
+                bool senderId =
+                    box.read('senderId') == true; // ถ้าไม่ใช่ true จะเป็น false
+                bool receiverId = box.read('receiverId') ==
+                    true; // ถ้าไม่ใช่ true จะเป็น false
+
+                if (!senderId) {
+                  Get.to(() => MapscreenPage(),
+                      transition: Transition.rightToLeft,
+                      duration: const Duration(milliseconds: 300));
+                } else if (!receiverId) {
+                  Get.to(() => MapscreenPage(),
+                      transition: Transition.rightToLeft,
+                      duration: const Duration(milliseconds: 300));
+                }
+              },
             ),
             Text(
               'Quick Rider',

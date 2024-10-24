@@ -155,6 +155,7 @@ class _HomeUserpageState extends State<HomeUserpage>
               padding: const EdgeInsets.all(8.0),
               child: ElevatedButton(
                 onPressed: () {
+                  box.write('senderId', true);
                   Get.to(() => const MapscreenPage(),
                       arguments: {
                         'senderId': userId,
@@ -236,6 +237,7 @@ class _HomeUserpageState extends State<HomeUserpage>
               padding: const EdgeInsets.all(8.0),
               child: ElevatedButton(
                 onPressed: () {
+                  box.write('receiverId', true);
                   Get.to(() => const MapscreenPage(),
                       arguments: {
                         'receiverId': userId,
