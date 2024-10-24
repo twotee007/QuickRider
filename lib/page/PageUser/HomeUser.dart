@@ -237,7 +237,7 @@ class _HomeUserpageState extends State<HomeUserpage>
 
         // ถ้าไม่มีออเดอร์ที่ไม่ใช่สถานะ 4
         if (!hasActiveOrders) {
-          return const Center(child: Text('คุณยังไม่มีการส่งสินค้า'));
+          return const Center(child: Text('คุณยังไม่มีรายการรับสินค้า'));
         }
 
         return Column(
@@ -315,7 +315,7 @@ class _HomeUserpageState extends State<HomeUserpage>
         Stack(
           children: [
             Container(
-              width: 360,
+              width: 340,
               height: 90,
               decoration: BoxDecoration(
                 color: const Color(0xFF412160),
@@ -363,7 +363,7 @@ class _HomeUserpageState extends State<HomeUserpage>
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF00C853),
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 30, vertical: 10),
+                            horizontal: 15, vertical: 8),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
                         ),

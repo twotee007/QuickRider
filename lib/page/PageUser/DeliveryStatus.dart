@@ -127,68 +127,6 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
     }
   }
 
-  // Future<void> _fetchOrderData() async {
-  //   try {
-  //     String userId = box.read('Userid');
-  //     // ดึงข้อมูลจาก Firestore ตาม orderId
-  //     DocumentSnapshot orderDoc = await FirebaseFirestore.instance
-  //         .collection('orders')
-  //         .doc(orderId)
-  //         .get();
-
-  //     // ตรวจสอบค่า senderPhoto, receiverId, และ status
-  //     if (orderDoc.exists) {
-  //       var data = orderDoc.data() as Map<String, dynamic>;
-
-  //       // ตรวจสอบสถานะ
-  //       String status = data['status'];
-
-  //       // ถ้าเป็นผู้รับ
-  //       if (data['receiverId'] == userId) {
-  //         setState(() {
-  //           // เปลี่ยน currentUserId เป็น userId ของผู้ใช้ปัจจุบัน
-  //           isImageUploaded = true; // ถ้าเป็นผู้รับ จะไม่ให้แสดงปุ่ม
-
-  //           // เปลี่ยนแปลงภาพตามสถานะ
-  //           if (status == '3') {
-  //             uploadedImageUrl = data['Photopickup']; // แสดงภาพจาก photopickup
-  //           } else if (status == '4') {
-  //             uploadedImageUrl =
-  //                 data['deliveredPhoto']; // แสดงภาพจาก deliveredPhoto
-  //           } else {
-  //             uploadedImageUrl =
-  //                 data['senderPhoto']; // ถ้าสถานะอื่นๆ ใช้ senderPhoto
-  //           }
-  //         });
-  //       } else {
-  //         // ถ้าไม่ใช่ผู้รับ ตรวจสอบค่า senderPhoto
-  //         if (data['senderPhoto'] != null) {
-  //           setState(() {
-  //             uploadedImageUrl = data['senderPhoto'];
-  //             isImageUploaded = true; // อัปเดตสถานะว่ามีการอัปโหลด
-  //             if (status == '3') {
-  //               uploadedImageUrl =
-  //                   data['Photopickup']; // แสดงภาพจาก photopickup
-  //             } else if (status == '4') {
-  //               uploadedImageUrl =
-  //                   data['deliveredPhoto']; // แสดงภาพจาก deliveredPhoto
-  //             } else {
-  //               uploadedImageUrl =
-  //                   data['senderPhoto']; // ถ้าสถานะอื่นๆ ใช้ senderPhoto
-  //             }
-  //           });
-  //         } else {
-  //           setState(() {
-  //             isImageUploaded = false; // ไม่มีการอัปโหลด
-  //           });
-  //         }
-  //       }
-  //     }
-  //   } catch (e) {
-  //     Get.snackbar('ข้อผิดพลาด', 'ไม่สามารถดึงข้อมูลได้: $e');
-  //   }
-  // }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -272,9 +210,9 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
 
   Widget _buildTopHeader() {
     return Container(
-      width: 390,
-      height: 80,
-      padding: const EdgeInsets.symmetric(vertical: 20),
+      width: 350,
+      height: 70,
+      padding: const EdgeInsets.symmetric(vertical: 15),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -370,7 +308,7 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
 
   Widget _buildHorizontalConnectorLine(bool isActive) {
     return Container(
-      width: 35,
+      width: 30,
       height: 3,
       color: isActive ? Color(0xFF412160) : Colors.grey.shade300,
       margin: EdgeInsets.only(bottom: 20),
@@ -408,7 +346,7 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
 
         return ListTile(
           leading: CircleAvatar(
-            radius: 40,
+            radius: 35,
             backgroundImage: NetworkImage(
                 riderData['img'] ?? 'https://via.placeholder.com/150'),
           ),
@@ -528,6 +466,20 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // เส้นคั้นและหัวข้อผู้ส่ง
+            Divider(height: 1, thickness: 1, color: Colors.grey[300]),
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                'ข้อมูลผู้ส่ง',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+
             // ข้อมูลผู้ส่ง
             RichText(
               text: TextSpan(

@@ -167,7 +167,7 @@ class _MapscreenPageState extends State<MapscreenPage> {
                           child: Icon(
                             Icons.motorcycle,
                             color: rider['color'],
-                            size: 40,
+                            size: 25,
                           ),
                         ),
                       );

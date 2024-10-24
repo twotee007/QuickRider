@@ -5,7 +5,7 @@ Widget cycletopri(String name, String url) {
   return Padding(
     padding: const EdgeInsets.only(top: 45),
     child: Container(
-      width: 380,
+      width: 350,
       height: 80,
       decoration: BoxDecoration(
         color: Colors.white,

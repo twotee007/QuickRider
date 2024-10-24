@@ -232,8 +232,8 @@ class _HomeRiderPageState extends State<HomeRiderPage>
                     duration: const Duration(milliseconds: 300));
               },
               child: Container(
-                width: 360,
-                height: 100,
+                width: 340,
+                height: 90,
                 decoration: BoxDecoration(
                   color: const Color(0xFF412160),
                   borderRadius: BorderRadius.circular(20),
@@ -280,7 +280,7 @@ class _HomeRiderPageState extends State<HomeRiderPage>
                           backgroundColor:
                               const Color.fromARGB(255, 18, 172, 82),
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 30, vertical: 10),
+                              horizontal: 18, vertical: 8),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30),
                           ),

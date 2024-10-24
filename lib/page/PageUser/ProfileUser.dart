@@ -403,8 +403,11 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
     TextEditingController? controller,
     bool isPasswordVisible = false,
     VoidCallback? togglePasswordVisibility,
-    String? errorMessage, // เพิ่ม errorMessage เพื่อใช้แสดงข้อความผิดพลาด
+    String? errorMessage,
   }) {
+    // เช็คว่าเป็นฟิลด์รหัสผ่านหรือไม่
+    bool isPasswordField = (label == "Password" || label == "Confirm Password");
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -418,13 +421,13 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
         const SizedBox(height: 5),
         TextField(
           controller: controller,
-          obscureText: (label == "Password" || label == "Confirm Password")
-              ? !isPasswordVisible
-              : false,
-          keyboardType: (label == "Phone")
-              ? TextInputType.phone
-              : TextInputType
-                  .text, // Set keyboard type to phone for Phone label
+          // กำหนด maxLines ตามประเภทของฟิลด์
+          maxLines: isPasswordField ? 1 : null,
+          minLines: 1,
+          textInputAction:
+              isPasswordField ? TextInputAction.done : TextInputAction.newline,
+          obscureText: isPasswordField ? !isPasswordVisible : false,
+          keyboardType: _getKeyboardType(label),
           inputFormatters: (label == "Phone")
               ? [
                   LengthLimitingTextInputFormatter(10),
@@ -453,7 +456,7 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
                 width: 2.0,
               ),
             ),
-            suffixIcon: (label == "Password" || label == "Confirm Password")
+            suffixIcon: isPasswordField
                 ? IconButton(
                     icon: Icon(
                       isPasswordVisible
@@ -465,9 +468,10 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
                   )
                 : null,
             isDense: true,
-            errorText: errorMessage, // ใช้ errorMessage ถ้ามีข้อผิดพลาด
+            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            errorText: errorMessage,
           ),
-          onTap: (label == "Date of Birth") // เมื่อแตะช่องกรอกวันที่เกิด
+          onTap: (label == "Date of Birth")
               ? () async {
                   DateTime? pickedDate = await showDatePicker(
                     context: context,
@@ -479,15 +483,29 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
                   if (pickedDate != null) {
                     String formattedDate =
                         "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}";
-                    controller?.text =
-                        formattedDate; // ใช้ controller ที่ส่งมาจากภายนอก
+                    controller?.text = formattedDate;
                   }
                 }
-              : null, // ไม่ทำอะไรหากไม่ใช่วันที่เกิด
+              : null,
         ),
         const SizedBox(height: 15),
       ],
     );
+  }
+
+// Helper function to determine keyboard type
+  TextInputType _getKeyboardType(String label) {
+    switch (label) {
+      case "Phone":
+        return TextInputType.phone;
+      case "Password":
+      case "Confirm Password":
+        return TextInputType.text;
+      case "Date of Birth":
+        return TextInputType.datetime;
+      default:
+        return TextInputType.multiline;
+    }
   }
 
   // Function to build TextField widget
@@ -509,6 +527,10 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
         const SizedBox(height: 5),
         TextField(
           readOnly: !isEditable,
+          // Enable multiline
+          maxLines: null, // null allows unlimited lines
+          minLines: 1, // minimum 1 line
+          keyboardType: TextInputType.multiline, // enables newline characters
           // Always obscure for password
           controller: controller ??
               TextEditingController(
@@ -541,6 +563,7 @@ class _ProfilePageUserState extends State<ProfilePageUser> {
               ),
             ),
             isDense: true,
+            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           ),
         ),
         const SizedBox(height: 15),

@@ -574,7 +574,7 @@ class _ProfilePageRiderState extends State<ProfilePageRider>
           Align(
             alignment: Alignment.center,
             child: Padding(
-              padding: const EdgeInsets.only(top: 150),
+              padding: const EdgeInsets.only(top: 140),
               child: Column(
                 children: [
                   Expanded(

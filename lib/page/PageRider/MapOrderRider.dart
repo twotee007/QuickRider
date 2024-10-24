@@ -243,7 +243,7 @@ class _MapOrderPageState extends State<MapOrderPage> {
                         height: 80.0,
                         child: const Icon(Icons.two_wheeler,
                             color: Color.fromARGB(255, 121, 44, 222),
-                            size: 40), // ไอคอนรถมอเตอร์ไซค์จาก Material Icons
+                            size: 25), // ไอคอนรถมอเตอร์ไซค์จาก Material Icons
                       ),
                       Marker(
                         point: end,
