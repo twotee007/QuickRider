@@ -89,6 +89,7 @@ class _MapscreenPageState extends State<MapscreenPage> {
       ordersSubscription = FirebaseFirestore.instance
           .collection('orders')
           .where(textfirebase, isEqualTo: userid)
+          .where('status', isNotEqualTo: '4') // Exclude orders with status == 4
           .snapshots()
           .listen((ordersSnapshot) {
         print('Orders Snapshot: ${ordersSnapshot.docs.length}');

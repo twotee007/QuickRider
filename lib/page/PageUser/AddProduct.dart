@@ -130,7 +130,7 @@ class _AddProductPageState extends State<AddProductPage> {
     });
   }
 
-  Future<void> _fetchUserAddress(String phone) async {
+  void _fetchUserAddress(String phone) async {
     try {
       QuerySnapshot querySnapshot = await FirebaseFirestore.instance
           .collection('Users')
@@ -141,7 +141,6 @@ class _AddProductPageState extends State<AddProductPage> {
       if (querySnapshot.docs.isNotEmpty) {
         DocumentSnapshot snapshot = querySnapshot.docs.first;
 
-        // ตรวจสอบว่ามีข้อมูลที่จำเป็นครบถ้วน
         if (snapshot.exists &&
             snapshot.data() != null &&
             (snapshot.data() as Map<String, dynamic>).containsKey('address') &&
@@ -155,17 +154,22 @@ class _AddProductPageState extends State<AddProductPage> {
             _shippingAddressController.text = address;
             deliveryLatitude = gpsLocation['latitude'];
             deliveryLongitude = gpsLocation['longitude'];
-
-            // เลื่อนแผนที่ไปยังตำแหน่งใหม่ถ้ามีการแสดงแผนที่อยู่
-            if (mapController1 != null &&
-                deliveryLatitude != null &&
-                deliveryLongitude != null) {
-              mapController1.move(
-                LatLng(deliveryLatitude!, deliveryLongitude!),
-                13.0,
-              );
-            }
           });
+
+          // Check if the mapController1 and FlutterMap are available before moving the map
+          if (mapController1 != null &&
+              mounted && // Ensure the widget is mounted
+              deliveryLatitude != null &&
+              deliveryLongitude != null) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mapController1 != null) {
+                mapController1.move(
+                  LatLng(deliveryLatitude!, deliveryLongitude!),
+                  13.0,
+                );
+              }
+            });
+          }
         } else {
           print('Missing required data in document');
           _resetAddressData();
