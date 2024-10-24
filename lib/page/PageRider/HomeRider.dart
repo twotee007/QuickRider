@@ -400,6 +400,19 @@ class _HomeRiderPageState extends State<HomeRiderPage>
     FirebaseFirestore firestore = FirebaseFirestore.instance;
 
     try {
+      // ดึงข้อมูล currentJob ของไรเดอร์
+      DocumentSnapshot riderSnapshot =
+          await firestore.collection('Users').doc(riderId).get();
+      Map<String, dynamic> riderData =
+          riderSnapshot.data() as Map<String, dynamic>;
+
+      if (riderData['currentJob'] == '1') {
+        // แสดง snackbar หากไรเดอร์มีงานอยู่แล้ว
+        Get.snackbar('Error', 'คุณรับงานไปแล้ว',
+            backgroundColor: Colors.red, colorText: Colors.white);
+        return; // หยุดการทำงานถ้าไรเดอร์มีงานอยู่แล้ว
+      }
+
       // เริ่ม Firebase Transaction
       await firestore.runTransaction((transaction) async {
         DocumentReference orderRef =
@@ -414,6 +427,7 @@ class _HomeRiderPageState extends State<HomeRiderPage>
 
         Map<String, dynamic> orderData =
             snapshot.data() as Map<String, dynamic>;
+
         // ตรวจสอบว่าออเดอร์นี้ยังไม่มีใครรับ
         String cheack = orderData['riderId'];
         if (cheack.isEmpty) {

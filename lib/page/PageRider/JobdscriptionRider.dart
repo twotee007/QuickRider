@@ -419,6 +419,17 @@ class _JobdscriptionriderPageState extends State<JobdscriptionriderPage> {
     FirebaseFirestore firestore = FirebaseFirestore.instance;
 
     try {
+      DocumentSnapshot riderSnapshot =
+          await firestore.collection('Users').doc(riderId).get();
+      Map<String, dynamic> riderData =
+          riderSnapshot.data() as Map<String, dynamic>;
+
+      if (riderData['currentJob'] == '1') {
+        // แสดง snackbar หากไรเดอร์มีงานอยู่แล้ว
+        Get.snackbar('Error', 'คุณรับงานไปแล้ว',
+            backgroundColor: Colors.red, colorText: Colors.white);
+        return; // หยุดการทำงานถ้าไรเดอร์มีงานอยู่แล้ว
+      }
       // เริ่ม Firebase Transaction
       await firestore.runTransaction((transaction) async {
         DocumentReference orderRef =
