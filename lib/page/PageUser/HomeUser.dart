@@ -168,8 +168,10 @@ class _HomeUserpageState extends State<HomeUserpage>
                         duration: const Duration(milliseconds: 300));
                     log("ปุ่มถูกกด");
                   },
-                  child:
-                      const Text('ดูตำแหน่ง Rider ทั้งหมดของสินค้าที่คุณส่ง'),
+                  child: const Text(
+                    'ดูตำแหน่ง Rider ทั้งหมดของสินค้าที่คุณส่ง',
+                    style: TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
+                  ),
                 ),
               ),
             Expanded(
@@ -255,8 +257,10 @@ class _HomeUserpageState extends State<HomeUserpage>
                         duration: const Duration(milliseconds: 300));
                     log("ปุ่มถูกกด");
                   },
-                  child:
-                      const Text('ดูตำแหน่ง Rider ทั้งหมดของสินค้าที่คุณรับ'),
+                  child: const Text(
+                    'ดูตำแหน่ง Rider ทั้งหมดของสินค้าที่คุณรับ',
+                    style: TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
+                  ),
                 ),
               ),
             Expanded(

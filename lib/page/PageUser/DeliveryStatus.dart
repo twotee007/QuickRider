@@ -41,9 +41,8 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
         .snapshots();
   }
 
-  Future<void> pickImage(String orderId) async {
-    final pickedFile =
-        await ImagePicker().pickImage(source: ImageSource.gallery);
+  Future<void> pickImage(String orderId, ImageSource source) async {
+    final pickedFile = await ImagePicker().pickImage(source: source);
     if (pickedFile != null) {
       setState(() {
         selectedImage = File(pickedFile.path);
@@ -51,7 +50,47 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
       });
       // อัปโหลดภาพไปยัง Firebase Storage พร้อมกับ orderId
       await uploadImageToFirebase(selectedImage!, orderId);
+      setState(() {
+        _isLoading = false; // หยุดแสดงสถานะโหลดเมื่อเสร็จสิ้นการอัปโหลด
+      });
+    } else {
+      setState(() {
+        _isLoading = false; // กรณีที่ไม่เลือกภาพก็หยุดแสดงสถานะโหลด
+      });
     }
+  }
+
+  void _showImageSourceActionSheet(BuildContext context, String orderId) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              ListTile(
+                leading: Icon(Icons.camera_alt),
+                title: Text('ถ่ายรูป'),
+                onTap: () {
+                  Navigator.pop(context);
+                  pickImage(
+                      orderId, ImageSource.camera); // เลือกถ่ายรูปจากกล้อง
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.photo),
+                title: Text('เลือกจากแกลเลอรี่'),
+                onTap: () {
+                  Navigator.pop(context);
+                  pickImage(
+                      orderId, ImageSource.gallery); // เลือกรูปจากแกลเลอรี่
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Future<void> uploadImageToFirebase(File image, String orderId) async {
@@ -206,7 +245,6 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
                           SizedBox(height: 20),
                           _buildDeliveryPersonDetails(orderData),
                           SizedBox(height: 20),
-                          _buildViewLocationButton(orderData),
                         ],
                       ),
                     ),
@@ -667,16 +705,9 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
                     ? Align(
                         alignment: Alignment.center,
                         child: ElevatedButton(
-                          onPressed: () async {
-                            setState(() {
-                              _isLoading =
-                                  true; // แสดงสถานะกำลังโหลดขณะเพิ่มรูปภาพ
-                            });
-                            await pickImage(orderId); // ทำการเพิ่มรูปภาพ
-                            setState(() {
-                              _isLoading =
-                                  false; // หยุดแสดงสถานะโหลดเมื่อเพิ่มรูปภาพเสร็จ
-                            });
+                          onPressed: () {
+                            _showImageSourceActionSheet(context,
+                                orderId); // เรียกใช้งานฟังก์ชันการเลือกแหล่งที่มาของรูปภาพ
                           },
                           child: Text('เพิ่มรูปภาพ'),
                           style: ElevatedButton.styleFrom(
@@ -693,32 +724,6 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildViewLocationButton(Map orderData) {
-    return Column(
-      children: [
-        SizedBox(height: 30), // เพิ่มระยะห่างด้านบน
-        Center(
-          child: ElevatedButton(
-            onPressed: () {
-              // TODO: Implement location viewing functionality
-            },
-            child: Text(
-              'ดูตำแหน่ง',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-            ),
-          ),
-        ),
-      ],
     );
   }
 

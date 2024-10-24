@@ -122,13 +122,13 @@ class _MapscreenPageState extends State<MapscreenPage> {
                   var cheack = data['status'];
                   var statusstring;
                   if (cheack == '1') {
-                    statusstring = 'รอไรเดอร์รับงาน';
+                    statusstring = 'รอจัดส่ง......';
                   } else if (cheack == '2') {
-                    statusstring = 'กำลังไปรับสินค้า';
+                    statusstring = 'รับงานแล้ว.....';
                   } else if (cheack == '3') {
-                    statusstring = 'กำลังจัดส่งสินค้า';
+                    statusstring = 'กำลังจัดส่ง.....';
                   } else if (cheack == '4') {
-                    statusstring = 'จัดส่งสำเร็จ';
+                    statusstring = 'จัดส่งสำเร็จ.....';
                   }
                   Color riderColor =
                       riderColors[data['riderId']] ?? Colors.grey;
@@ -248,7 +248,11 @@ class _MapscreenPageState extends State<MapscreenPage> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Riders Map'),
+          title: const Text(
+            'Riders Map',
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Color(0xFF412160), // เปลี่ยนสีพื้นหลังเป็นสีม่วง
         ),
         body: isLoading
             ? const Center(child: CircularProgressIndicator())
@@ -328,12 +332,13 @@ class _MapscreenPageState extends State<MapscreenPage> {
                                         ),
                                         const SizedBox(height: 8), // เว้นระยะ
                                         Text(
-                                          'ตอนนี้ออเดอร์ยังไม่มีไรเดอร์รับงาน',
+                                          'ยังไม่มีไรเดอร์รับงาน กรุณารอสักครู่...',
                                           style: const TextStyle(
                                             fontSize: 18, // ขนาดตัวอักษร
                                             fontWeight:
                                                 FontWeight.bold, // หนักตัวอักษร
-                                            color: Colors.blue, // สีตัวอักษร
+                                            color: Color.fromARGB(
+                                                255, 0, 24, 207), // สีตัวอักษร
                                           ),
                                           textAlign: TextAlign
                                               .center, // จัดข้อความกลาง
