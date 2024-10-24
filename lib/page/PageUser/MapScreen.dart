@@ -8,6 +8,8 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:provider/provider.dart';
+import 'package:quickrider/config/shared/appData.dart';
 import 'package:quickrider/page/PageUser/DeliveryStatus.dart';
 import 'package:quickrider/page/PageUser/HomeUser.dart';
 
@@ -28,7 +30,7 @@ class _MapscreenPageState extends State<MapscreenPage> {
   Random random = Random();
   String textfirebase = '';
   bool isLoading = true;
-  LatLng centerPosition = LatLng(17.303615, 101.775303);
+  LatLng centerPosition = const LatLng(17.303615, 101.775303);
   final MapController _mapController = MapController();
   bool _isMapReady = false;
 
@@ -47,16 +49,6 @@ class _MapscreenPageState extends State<MapscreenPage> {
     _listenToRidersLocation();
   }
 
-  @override
-  void dispose() {
-    box.remove('receiverId');
-    box.remove('senderId');
-    ordersSubscription?.cancel();
-    riderSubscription?.cancel();
-    print('StopRealTime');
-    super.dispose();
-  }
-
   Color getRandomColor() {
     return Color.fromARGB(
       255,
@@ -67,6 +59,13 @@ class _MapscreenPageState extends State<MapscreenPage> {
   }
 
   void _listenToRidersLocation() async {
+    if (context.read<AppData>().ordersSubscription != null &&
+        context.read<AppData>().riderSubscription != null) {
+      context.read<AppData>().ordersSubscription!.cancel();
+      context.read<AppData>().ordersSubscription = null;
+      context.read<AppData>().riderSubscription!.cancel();
+      context.read<AppData>().riderSubscription = null;
+    }
     try {
       String userid = box.read('Userid');
 
@@ -84,13 +83,12 @@ class _MapscreenPageState extends State<MapscreenPage> {
               location['latitude'] ?? 17.303615,
               location['longitude'] ?? 101.775303,
             );
-            isLoading = false;
           });
         }
       }
 
       print('Start Real Time');
-      ordersSubscription = FirebaseFirestore.instance
+      context.read<AppData>().ordersSubscription = FirebaseFirestore.instance
           .collection('orders')
           .where(textfirebase, isEqualTo: userid)
           .snapshots()
@@ -105,7 +103,8 @@ class _MapscreenPageState extends State<MapscreenPage> {
           if (data['status'] != '4') {
             if (data['riderId'] != null &&
                 data['riderId'].toString().isNotEmpty) {
-              riderSubscription = FirebaseFirestore.instance
+              context.read<AppData>().riderSubscription = FirebaseFirestore
+                  .instance
                   .collection('Users')
                   .doc(data['riderId'])
                   .snapshots()
@@ -120,13 +119,23 @@ class _MapscreenPageState extends State<MapscreenPage> {
                     riderColors[data['riderId']] =
                         getRandomColor(); // สุ่มสีใหม่
                   }
-
+                  var cheack = data['status'];
+                  var statusstring;
+                  if (cheack == '1') {
+                    statusstring = 'รอไรเดอร์รับงาน';
+                  } else if (cheack == '2') {
+                    statusstring = 'กำลังไปรับสินค้า';
+                  } else if (cheack == '3') {
+                    statusstring = 'กำลังจัดส่งสินค้า';
+                  } else if (cheack == '4') {
+                    statusstring = 'จัดส่งสำเร็จ';
+                  }
                   Color riderColor =
                       riderColors[data['riderId']] ?? Colors.grey;
 
                   updatedRidersLocations[orderDoc.id] = {
                     'fullname': riderData['fullname'],
-                    'status': data['status'],
+                    'status': statusstring,
                     'img': riderData['img'],
                     'phone': riderData['phone'],
                     'registration': riderData['registration'],
@@ -169,7 +178,7 @@ class _MapscreenPageState extends State<MapscreenPage> {
                       Marker(
                         point: centerPosition,
                         child: Container(
-                          child: Icon(
+                          child: const Icon(
                             Icons.location_pin,
                             color: Colors.red,
                             size: 40,
@@ -189,11 +198,28 @@ class _MapscreenPageState extends State<MapscreenPage> {
                 }
               });
             }
+          } else {
+            ridersMarkers.add(
+              Marker(
+                point: centerPosition,
+                child: Container(
+                  child: const Icon(
+                    Icons.location_pin,
+                    color: Colors.red,
+                    size: 40,
+                  ),
+                ),
+              ),
+            );
           }
         }
       });
     } catch (e) {
       print('Error: $e');
+      setState(() {
+        isLoading = false;
+      });
+    } finally {
       setState(() {
         isLoading = false;
       });
@@ -207,10 +233,15 @@ class _MapscreenPageState extends State<MapscreenPage> {
         // เปลี่ยนเส้นทางไปยัง HomeUserpage แทนที่จะ pop ออก
         box.remove('receiverId');
         box.remove('senderId');
-        ordersSubscription?.cancel();
-        riderSubscription?.cancel();
+        if (context.read<AppData>().ordersSubscription != null &&
+            context.read<AppData>().riderSubscription != null) {
+          context.read<AppData>().ordersSubscription!.cancel();
+          context.read<AppData>().ordersSubscription = null;
+          context.read<AppData>().riderSubscription!.cancel();
+          context.read<AppData>().riderSubscription = null;
+        }
         print('StopRealTime');
-        Get.to(() => HomeUserpage(),
+        Get.to(() => const HomeUserpage(),
             transition: Transition.rightToLeft,
             duration: const Duration(milliseconds: 300));
         return false; // ไม่ให้ pop หน้าออก
@@ -271,74 +302,141 @@ class _MapscreenPageState extends State<MapscreenPage> {
                                       fontWeight: FontWeight.bold),
                                 ),
                               ),
-                              ...ridersLocations.map((rider) {
-                                return GestureDetector(
-                                  onTap: () {
-                                    ordersSubscription?.cancel();
-                                    riderSubscription?.cancel();
-                                    print('StopRealTime');
-                                    print(
-                                        'Card clicked for order ID: ${rider['orderId']}');
-                                    Get.to(() => DeliveryStatusScreen(),
-                                        arguments: {
-                                          'orderId': rider['orderId'],
-                                        },
-                                        transition: Transition.rightToLeft,
-                                        duration:
-                                            const Duration(milliseconds: 300));
-                                  },
-                                  child: Card(
-                                    margin: EdgeInsets.symmetric(
-                                        vertical: 8, horizontal: 16),
-                                    elevation: 4,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
+                              if (ridersLocations.isEmpty)
+                                Center(
+                                  child: Container(
+                                    padding: const EdgeInsets.all(16.0),
+                                    margin: const EdgeInsets.symmetric(
+                                        horizontal: 16.0),
+                                    decoration: BoxDecoration(
+                                      color: Colors.blue.withOpacity(
+                                          0.1), // สีพื้นหลังที่นุ่มนวล
+                                      borderRadius:
+                                          BorderRadius.circular(12), // มุมมน
+                                      border: Border.all(
+                                          color: Colors.blue,
+                                          width: 1.5), // เส้นขอบ
                                     ),
-                                    child: ListTile(
-                                      leading: CircleAvatar(
-                                        radius: 25,
-                                        backgroundColor: rider['color'],
-                                        child: ClipOval(
-                                          child: Image.network(
-                                            rider[
-                                                'img'], // ใช้รูปภาพของรถแทนไอคอน
-                                            fit: BoxFit
-                                                .cover, // ปรับให้เต็มพื้นที่
-                                            height: 50, // ปรับขนาดให้เหมาะสม
-                                            width: 50, // ปรับขนาดให้เหมาะสม
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons
+                                              .info_outline, // เปลี่ยนเป็นไอคอนข้อมูล
+                                          color: Colors.blue,
+                                          size: 30, // ขนาดไอคอน
+                                        ),
+                                        const SizedBox(height: 8), // เว้นระยะ
+                                        Text(
+                                          'ตอนนี้ออเดอร์ยังไม่มีไรเดอร์รับงาน',
+                                          style: const TextStyle(
+                                            fontSize: 18, // ขนาดตัวอักษร
+                                            fontWeight:
+                                                FontWeight.bold, // หนักตัวอักษร
+                                            color: Colors.blue, // สีตัวอักษร
+                                          ),
+                                          textAlign: TextAlign
+                                              .center, // จัดข้อความกลาง
+                                        ),
+                                        const SizedBox(
+                                            height: 12), // เว้นระยะเพิ่มเติม
+                                      ],
+                                    ),
+                                  ),
+                                )
+                              else
+                                ...ridersLocations.map((rider) {
+                                  return GestureDetector(
+                                    onTap: () {
+                                      if (context
+                                                  .read<AppData>()
+                                                  .ordersSubscription !=
+                                              null &&
+                                          context
+                                                  .read<AppData>()
+                                                  .riderSubscription !=
+                                              null) {
+                                        context
+                                            .read<AppData>()
+                                            .ordersSubscription!
+                                            .cancel();
+                                        context
+                                            .read<AppData>()
+                                            .ordersSubscription = null;
+                                        context
+                                            .read<AppData>()
+                                            .riderSubscription!
+                                            .cancel();
+                                        context
+                                            .read<AppData>()
+                                            .riderSubscription = null;
+                                      }
+                                      print('StopRealTime');
+                                      print(
+                                          'Card clicked for order ID: ${rider['orderId']}');
+                                      Get.to(() => DeliveryStatusScreen(),
+                                          arguments: {
+                                            'orderId': rider['orderId'],
+                                          },
+                                          transition: Transition.rightToLeft,
+                                          duration: const Duration(
+                                              milliseconds: 300));
+                                    },
+                                    child: Card(
+                                      margin: const EdgeInsets.symmetric(
+                                          vertical: 8, horizontal: 16),
+                                      elevation: 4,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: ListTile(
+                                        leading: CircleAvatar(
+                                          radius: 25,
+                                          backgroundColor: rider['color'],
+                                          child: ClipOval(
+                                            child: Image.network(
+                                              rider[
+                                                  'img'], // ใช้รูปภาพของรถแทนไอคอน
+                                              fit: BoxFit
+                                                  .cover, // ปรับให้เต็มพื้นที่
+                                              height: 50, // ปรับขนาดให้เหมาะสม
+                                              width: 50, // ปรับขนาดให้เหมาะสม
+                                            ),
+                                          ),
+                                        ),
+                                        title: Text(
+                                          rider['fullname'],
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                        subtitle: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            const SizedBox(height: 4),
+                                            Text(
+                                                'เบอร์โทร : ${rider['phone']}'),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                                'ทะเบียนรถ : ${rider['registration']}'),
+                                            const SizedBox(height: 2),
+                                            Text('Status : ${rider['status']}'),
+                                          ],
+                                        ),
+                                        trailing: CircleAvatar(
+                                          radius: 25,
+                                          backgroundColor: rider['color'],
+                                          child: const Icon(
+                                            Icons.motorcycle,
+                                            color: Colors.white,
                                           ),
                                         ),
                                       ),
-                                      title: Text(
-                                        rider['fullname'],
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16,
-                                        ),
-                                      ),
-                                      subtitle: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          SizedBox(height: 4),
-                                          Text('เบอร์โทร : ${rider['phone']}'),
-                                          SizedBox(height: 2),
-                                          Text(
-                                              'ทะเบียนรถ : ${rider['registration']}'),
-                                        ],
-                                      ),
-                                      trailing: CircleAvatar(
-                                        radius: 25,
-                                        backgroundColor: rider['color'],
-                                        child: Icon(
-                                          Icons.motorcycle,
-                                          color: Colors.white,
-                                        ),
-                                      ),
                                     ),
-                                  ),
-                                );
-                              }).toList(),
+                                  );
+                                }).toList(),
                             ],
                           ),
                         ),

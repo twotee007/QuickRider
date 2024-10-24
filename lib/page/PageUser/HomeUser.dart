@@ -143,30 +143,35 @@ class _HomeUserpageState extends State<HomeUserpage>
 
         final orders = snapshot.data!.docs;
 
-        if (orders.isEmpty) {
+        // ตรวจสอบว่ามีออเดอร์ที่ไม่ใช่สถานะ 4 หรือไม่
+        bool hasActiveOrders = orders.any((order) => order['status'] != '4');
+
+        // ถ้าไม่มีออเดอร์ที่ไม่ใช่สถานะ 4
+        if (!hasActiveOrders) {
           return const Center(child: Text('คุณยังไม่มีการส่งสินค้า'));
         }
 
         return Column(
           children: [
-            // ตรวจสอบว่ามีออเดอร์มากกว่า 1 หรือไม่
-
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: ElevatedButton(
-                onPressed: () {
-                  box.write('senderId', true);
-                  Get.to(() => const MapscreenPage(),
-                      arguments: {
-                        'senderId': userId,
-                      },
-                      transition: Transition.rightToLeft,
-                      duration: const Duration(milliseconds: 300));
-                  log("ปุ่มถูกกด");
-                },
-                child: const Text('ดูตำแหน่ง Rider ทั้งหมดของสินค้าที่คุณส่ง'),
+            // แสดงปุ่มถ้ามีออเดอร์ที่ไม่ใช่สถานะ 4
+            if (hasActiveOrders)
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: ElevatedButton(
+                  onPressed: () {
+                    box.write('senderId', true);
+                    Get.to(() => const MapscreenPage(),
+                        arguments: {
+                          'senderId': userId,
+                        },
+                        transition: Transition.rightToLeft,
+                        duration: const Duration(milliseconds: 300));
+                    log("ปุ่มถูกกด");
+                  },
+                  child:
+                      const Text('ดูตำแหน่ง Rider ทั้งหมดของสินค้าที่คุณส่ง'),
+                ),
               ),
-            ),
             Expanded(
               child: ListView.builder(
                 itemCount: orders.length,
@@ -225,30 +230,35 @@ class _HomeUserpageState extends State<HomeUserpage>
 
         final orders = snapshot.data!.docs;
 
-        if (orders.isEmpty) {
-          return const Center(child: Text('คุณยังไม่มีการรับสินค้า'));
+        // ตรวจสอบว่าไม่มีออเดอร์
+        bool hasActiveOrders = orders.any((order) => order['status'] != '4');
+
+        // ถ้าไม่มีออเดอร์ที่ไม่ใช่สถานะ 4
+        if (!hasActiveOrders) {
+          return const Center(child: Text('คุณยังไม่มีการส่งสินค้า'));
         }
 
         return Column(
           children: [
-            // ตรวจสอบว่ามีออเดอร์มากกว่า 1 หรือไม่
-
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: ElevatedButton(
-                onPressed: () {
-                  box.write('receiverId', true);
-                  Get.to(() => const MapscreenPage(),
-                      arguments: {
-                        'receiverId': userId,
-                      },
-                      transition: Transition.rightToLeft,
-                      duration: const Duration(milliseconds: 300));
-                  log("ปุ่มถูกกด");
-                },
-                child: const Text('ดูตำแหน่ง Rider ทั้งหมดของสินค้าที่คุณรับ'),
+            // แสดงปุ่มถ้ามีออเดอร์ที่ไม่ใช่สถานะ 4
+            if (hasActiveOrders)
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: ElevatedButton(
+                  onPressed: () {
+                    box.write('receiverId', true);
+                    Get.to(() => const MapscreenPage(),
+                        arguments: {
+                          'receiverId': userId,
+                        },
+                        transition: Transition.rightToLeft,
+                        duration: const Duration(milliseconds: 300));
+                    log("ปุ่มถูกกด");
+                  },
+                  child:
+                      const Text('ดูตำแหน่ง Rider ทั้งหมดของสินค้าที่คุณรับ'),
+                ),
               ),
-            ),
             Expanded(
               child: ListView.builder(
                 itemCount: orders.length,

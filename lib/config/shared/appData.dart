@@ -17,6 +17,8 @@ class AppData with ChangeNotifier {
   double? latitude; // เก็บ latitude เป็น double?
   double? longitude; // เก็บ longitude เป็น double?
   StreamSubscription? listener;
+  StreamSubscription? ordersSubscription;
+  StreamSubscription? riderSubscription;
 }
 
 class OrderUser {
