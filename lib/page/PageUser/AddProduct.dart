@@ -32,6 +32,7 @@ class _AddProductPageState extends State<AddProductPage> {
       TextEditingController();
   final TextEditingController _shippingAddressController =
       TextEditingController();
+  final TextEditingController nameController = TextEditingController();
   List<Map<String, dynamic>> _productControllers = [];
   final ImagePicker _picker = ImagePicker();
   final userService = Get.find<UserService>();
@@ -84,47 +85,48 @@ class _AddProductPageState extends State<AddProductPage> {
 
   Future<void> phoneuser(String userId) async {
     try {
-      // ตรวจสอบ userId ที่ได้รับเข้ามา
       if (userId.isEmpty) {
         print('No valid userId provided.');
         return;
       }
 
-      // ดึงข้อมูลผู้ใช้ทั้งหมดที่มี type = 'user' และไม่ใช่ userId ปัจจุบัน
       QuerySnapshot snapshot = await FirebaseFirestore.instance
           .collection('Users')
-          .where('type', isEqualTo: 'user') // กรองผู้ใช้ตามประเภท 'user'
-          .where(FieldPath.documentId,
-              isNotEqualTo: userId) // กรองไม่ให้ตรงกับ userId ปัจจุบัน
+          .where('type', isEqualTo: 'user')
+          .where(FieldPath.documentId, isNotEqualTo: userId)
           .get();
 
-      // ดึงเฉพาะเบอร์โทรจากเอกสารที่ค้นพบ
-      _databasePhones = snapshot.docs.map((doc) {
-        return doc['phone'] as String;
+      // เก็บทั้งชื่อและเบอร์โทรไว้ใน _databaseUsers
+      _databaseUsers = snapshot.docs.map((doc) {
+        return {
+          'name': doc['fullname'] as String,
+          'phone': doc['phone'] as String
+        };
       }).toList();
 
-      // แสดงข้อมูลเบอร์โทรที่ค้นพบใน log
-      log('User Phones (excluding current): $_databasePhones');
+      log('User Phones and Names (excluding current): $_databaseUsers');
     } catch (e) {
       print('Error fetching user phones: $e');
     }
   }
 
   // จำลองฐานข้อมูลเบอร์โทรศัพท์
-  List<String> _databasePhones = []; // ประกาศตัวแปรที่ระดับคลาส
-  List<String> _filteredPhones = [];
-
+  List<Map<String, String>> _databaseUsers =
+      []; // ประกาศตัวแปรเก็บชื่อและเบอร์โทรเป็นคู่
+  List<Map<String, String>> _filteredPhones = [];
   void _searchPhoneNumber(String input) {
     setState(() {
       if (input.isEmpty) {
         _filteredPhones.clear();
         _shippingAddressController.clear();
-        // รีเซ็ตค่าพิกัดเมื่อลบเบอร์
+        nameController.clear();
         deliveryLatitude = null;
         deliveryLongitude = null;
       } else {
-        _filteredPhones = _databasePhones
-            .where((phone) => phone.toLowerCase().contains(input.toLowerCase()))
+        _filteredPhones = _databaseUsers
+            .where((user) =>
+                user['phone']!.toLowerCase().contains(input.toLowerCase()) ||
+                user['name']!.toLowerCase().contains(input.toLowerCase()))
             .toList();
       }
     });
@@ -147,10 +149,12 @@ class _AddProductPageState extends State<AddProductPage> {
             (snapshot.data() as Map<String, dynamic>)
                 .containsKey('gpsLocation')) {
           String address = snapshot['address'] as String;
+          String name = snapshot['fullname'] as String;
           Map<String, dynamic> gpsLocation =
               snapshot['gpsLocation'] as Map<String, dynamic>;
 
           setState(() {
+            nameController.text = name;
             _shippingAddressController.text = address;
             deliveryLatitude = gpsLocation['latitude'];
             deliveryLongitude = gpsLocation['longitude'];
@@ -187,6 +191,7 @@ class _AddProductPageState extends State<AddProductPage> {
   void _resetAddressData() {
     setState(() {
       _shippingAddressController.text = '';
+      nameController.text = '';
       deliveryLatitude = null;
       deliveryLongitude = null;
     });
@@ -200,13 +205,15 @@ class _AddProductPageState extends State<AddProductPage> {
 
     if (phone.isEmpty) {
       _shippingAddressController.clear(); // ล้างที่อยู่เมื่อไม่มีเบอร์โทร
+      nameController.clear();
     } else {
       _fetchUserAddress(phone); // เรียกฟังก์ชันเพื่อดึงที่อยู่
     }
   }
 
   // ฟังก์ชันสร้าง TextField
-  Widget _buildTextField(String label, TextEditingController controller) {
+  Widget _buildTextField(
+      String label, TextEditingController controller, bool isEditable) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -227,6 +234,7 @@ class _AddProductPageState extends State<AddProductPage> {
             border: const UnderlineInputBorder(), // เปลี่ยนเป็นเส้นใต้
             isDense: true, // ลดขนาดของฟอร์มให้พอดี
           ),
+          readOnly: !isEditable, // ใช้ readOnly เพื่อไม่ให้เบลอ
         ),
       ],
     );
@@ -354,9 +362,11 @@ class _AddProductPageState extends State<AddProductPage> {
                               const SizedBox(height: 30),
 
                               _buildTextField('ที่อยู่จัดส่งที่:',
-                                  _shippingAddressController),
+                                  _shippingAddressController, true),
                               const SizedBox(height: 20),
-
+                              _buildTextField(
+                                  'ชื่อผู้รับ:', nameController, false),
+                              const SizedBox(height: 20),
 // เพิ่มส่วนแสดงแผนที่
                               if (deliveryLatitude != null &&
                                   deliveryLongitude !=
@@ -505,14 +515,14 @@ class _AddProductPageState extends State<AddProductPage> {
                                       ],
                                     ),
                                     const SizedBox(height: 30),
-                                    _buildTextField(
-                                        'ชื่อสินค้า:', product['productName']),
+                                    _buildTextField('ชื่อสินค้า:',
+                                        product['productName'], true),
                                     const SizedBox(height: 20),
                                     _buildQuantityField('จำนวนสินค้า:',
                                         product['productQuantity']),
                                     const SizedBox(height: 20),
                                     _buildTextField('รายละเอียดสินค้า:',
-                                        product['productDetails']),
+                                        product['productDetails'], true),
                                     const SizedBox(height: 20),
                                   ],
                                 );
@@ -581,7 +591,7 @@ class _AddProductPageState extends State<AddProductPage> {
             Positioned(
               left: 20,
               right: 20,
-              top: 310, // ปรับตำแหน่งตามต้องการ
+              top: 310,
               child: Material(
                 elevation: 5,
                 borderRadius: BorderRadius.circular(5),
@@ -594,10 +604,10 @@ class _AddProductPageState extends State<AddProductPage> {
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: _filteredPhones.map((phone) {
+                    children: _filteredPhones.map((user) {
                       return GestureDetector(
                         onTap: () {
-                          _selectPhoneNumber(phone);
+                          _selectPhoneNumber(user['phone']!);
                         },
                         child: Container(
                           margin: const EdgeInsets.symmetric(vertical: 4),
@@ -609,8 +619,17 @@ class _AddProductPageState extends State<AddProductPage> {
                           ),
                           child: RichText(
                             text: TextSpan(
-                              children: _highlightMatchedText(
-                                  phone, _phoneController.text),
+                              children: [
+                                TextSpan(
+                                  text: '${user['name']} - ',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                                ..._highlightMatchedText(
+                                    user['phone']!, _phoneController.text),
+                              ],
                               style: const TextStyle(
                                 fontSize: 16,
                                 color: Colors.black,
